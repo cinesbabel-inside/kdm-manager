@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KDM Manager — Cines Babel · v1.2</title>
+<title>KDM Manager — Cines Babel · v1.7</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🔐</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -529,6 +529,122 @@
   }
 
   .mail-btn svg { width: 14px; height: 14px; }
+
+  /* ── COLUMNAS ORDENABLES ── */
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .sortable:hover { color: var(--text-primary); }
+  .sort-icon {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 9px;
+    opacity: 0.3;
+    transition: opacity 0.15s;
+    vertical-align: middle;
+  }
+  .sortable:hover .sort-icon { opacity: 0.6; }
+  .sortable.asc .sort-icon,
+  .sortable.desc .sort-icon { opacity: 1; color: var(--accent); }
+  .sortable.asc .sort-icon::after  { content: '▲'; }
+  .sortable.desc .sort-icon::after { content: '▼'; }
+  .sortable:not(.asc):not(.desc) .sort-icon::after { content: '▲'; }
+  .select-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 13px; border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .select-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .select-btn.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Checkbox en filas */
+  .col-check { width: 36px; text-align: center; }
+  .row-check {
+    width: 16px; height: 16px;
+    cursor: pointer; accent-color: var(--accent);
+    display: none; /* oculta por defecto */
+  }
+  body.selecting .row-check { display: inline-block; }
+  body.selecting tbody tr { cursor: pointer; }
+  body.selecting tbody tr.selected { background: var(--accent-soft) !important; }
+
+  /* Barra flotante de acción */
+  .selection-bar {
+    position: fixed;
+    bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: var(--shadow);
+    z-index: 150;
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s;
+    opacity: 0; pointer-events: none;
+    white-space: nowrap;
+  }
+  .selection-bar.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1; pointer-events: all;
+  }
+  .selection-bar-count {
+    font-size: 12px; font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .selection-bar-count span { color: var(--accent); }
+  .selection-bar-divider { width: 1px; height: 18px; background: var(--border-strong); }
+  .btn-archive-sel {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 16px; border-radius: 20px;
+    border: none; background: var(--accent);
+    font-size: 12px; font-weight: 700;
+    color: white; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-archive-sel:hover { background: var(--accent-hover); }
+  .btn-cancel-sel {
+    padding: 7px 14px; border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-cancel-sel:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  /* Sección dentro de archivadas */
+  .archived-section-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted); letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 14px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+  }
+
+  /* Botón restaurar */
+  .btn-restore {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-secondary); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-restore:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
   /* Date cell */
   .date-main {
@@ -1115,6 +1231,11 @@
         </button>
       </div>
 
+      <button class="select-btn" id="selectModeBtn" onclick="toggleSelectMode()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 11 12 14 22 4"/></svg>
+        Seleccionar
+      </button>
+
       <button class="add-btn" onclick="openModal()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Añadir KDM
@@ -1125,11 +1246,12 @@
       <table>
         <thead>
           <tr>
-            <th class="col-film">Película</th>
+            <th class="col-check" id="thCheck" style="display:none"></th>
+            <th class="col-film sortable" id="sort-film" onclick="setSort('film')">Película <span class="sort-icon"></span></th>
             <th class="col-cpls">Archivos CPL</th>
             <th class="col-mail">Correo</th>
-            <th class="col-date">Inicio</th>
-            <th class="col-date">Fin</th>
+            <th class="col-date sortable" id="sort-start" onclick="setSort('start')">Inicio <span class="sort-icon"></span></th>
+            <th class="col-date sortable" id="sort-end" onclick="setSort('end')">Fin <span class="sort-icon"></span></th>
             <th class="col-status">Estado</th>
             <th class="col-actions"></th>
           </tr>
@@ -1154,29 +1276,71 @@
         <input class="search-input" type="text" placeholder="Buscar en archivadas…" oninput="filterArchived()" id="searchArchived">
       </div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-film">Película</th>
-            <th class="col-cpls">Archivos CPL</th>
-            <th class="col-mail">Correo</th>
-            <th class="col-date">Inicio</th>
-            <th class="col-date">Fin</th>
-            <th class="col-status">Caducó</th>
-          </tr>
-        </thead>
-        <tbody id="archivedTableBody"></tbody>
-      </table>
-      <div class="empty-state" id="emptyArchived" style="display:none">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <p>No hay KDMs archivadas</p>
-        <small>Las KDMs caducadas hace más de 5 días aparecerán aquí</small>
+
+    <!-- Sección: Archivadas manualmente -->
+    <div id="manualArchivedSection">
+      <div class="archived-section-title">📁 Fuera de cartelera — archivadas manualmente</div>
+      <div class="table-wrap" style="border-radius:0 0 var(--radius) var(--radius);margin-bottom:20px;">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-film">Película</th>
+              <th class="col-cpls">Archivos CPL</th>
+              <th class="col-mail">Correo</th>
+              <th class="col-date">Inicio</th>
+              <th class="col-date">Fin</th>
+              <th class="col-status">Estado</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="manualArchivedBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyManualArchived" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <p>No hay KDMs archivadas manualmente</p>
+          <small>Usa el modo selección en la lista principal para archivar películas fuera de cartelera</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Caducadas -->
+    <div id="expiredArchivedSection">
+      <div class="archived-section-title">🗓 Historial — KDMs caducadas</div>
+      <div class="table-wrap" style="border-radius:0 0 var(--radius) var(--radius);">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-film">Película</th>
+              <th class="col-cpls">Archivos CPL</th>
+              <th class="col-mail">Correo</th>
+              <th class="col-date">Inicio</th>
+              <th class="col-date">Fin</th>
+              <th class="col-status">Caducó</th>
+            </tr>
+          </thead>
+          <tbody id="archivedTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyArchived" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <p>No hay KDMs caducadas en el historial</p>
+          <small>Las KDMs caducadas hace más de 5 días aparecerán aquí</small>
+        </div>
       </div>
     </div>
   </div>
 
 </main>
+
+<!-- ═══ BARRA DE SELECCIÓN FLOTANTE ═══ -->
+<div class="selection-bar" id="selectionBar">
+  <span class="selection-bar-count"><span id="selCount">0</span> seleccionadas</span>
+  <div class="selection-bar-divider"></div>
+  <button class="btn-archive-sel" onclick="archiveSelected()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+    Archivar seleccionadas
+  </button>
+  <button class="btn-cancel-sel" onclick="toggleSelectMode()">Cancelar</button>
+</div>
 
 <!-- ═══ MODAL: AÑADIR / EDITAR KDM ═══ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
@@ -1232,112 +1396,85 @@
     </div>
     <div class="modal-scroll">
 
-      <div style="
-        background: rgba(245,158,11,0.08);
-        border: 1px solid rgba(245,158,11,0.25);
-        border-radius: 10px;
-        padding: 12px 16px;
-        margin-bottom: 24px;
-        display: flex;
-        gap: 10px;
-        align-items: flex-start;
-      ">
+      <!-- AVISO -->
+      <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;gap:10px;align-items:flex-start;">
         <span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠️</span>
         <p style="font-size:0.74rem;color:var(--text-secondary);line-height:1.65;margin:0;">
-          Esta herramienta está diseñada para agilizar la gestión de KDMs, pero puede cometer errores en la lectura o interpretación de correos. 
-          <strong style="color:var(--text-primary);">Ante cualquier duda, verifica siempre la información directamente en el correo original.</strong> 
+          Esta herramienta está diseñada para agilizar la gestión de KDMs, pero puede cometer errores en la lectura o interpretación de correos.
+          <strong style="color:var(--text-primary);">Ante cualquier duda, verifica siempre la información directamente en el correo original.</strong>
           No la uses como única fuente de verdad en situaciones críticas.
         </p>
       </div>
 
+      <!-- USO BÁSICO -->
       <div class="help-section">
-        <div class="help-section-title">¿Para qué sirve esta herramienta?</div>
-        <p>KDM Manager permite llevar el control de las claves KDM recibidas en Cines Babel. Las KDMs son las claves de descifrado que las distribuidoras envían por correo para que los proyectores puedan reproducir las películas DCP durante un periodo de tiempo determinado.</p>
-        <p>Los datos se sincronizan con Google Sheets y se leen automáticamente desde Gmail, lo que permite que todos los ordenadores del cine vean la misma información en tiempo real.</p>
-      </div>
+        <div class="help-section-title">Lo básico — qué ver y qué hacer</div>
+        <p>La lista muestra todas las KDMs recibidas. Cada fila es una clave para una película. Lo más importante es la columna <strong style="color:var(--text-primary);">Estado</strong> — de un vistazo sabes si la clave está funcionando o no.</p>
 
-      <div class="help-section">
-        <div class="help-section-title">Columnas de la tabla</div>
-
-        <div class="help-row">
-          <span style="font-size:0.82rem;margin-top:1px;">🎬</span>
-          <span><strong style="color:var(--text-primary);">Película</strong> — Título de la película al que pertenece la KDM, junto con la distribuidora y la fecha en que se recibió el correo.</span>
-        </div>
-
-        <div class="help-row" style="margin-top:10px;">
-          <span style="font-size:0.82rem;margin-top:1px;">📄</span>
-          <span><strong style="color:var(--text-primary);">Archivos CPL</strong> — Nombre técnico del archivo de contenido (Content Playlist). Una misma película puede tener varios CPLs si viene en distintos idiomas o versiones (OV, VE, subtitulada…).</span>
-        </div>
-
-        <div class="help-row" style="margin-top:10px;">
-          <span style="font-size:0.82rem;margin-top:1px;">✉️</span>
-          <span><strong style="color:var(--text-primary);">Correo</strong> — Acceso directo al correo original de la distribuidora. Haz clic en el icono para abrirlo en Gmail y descargar los archivos KDM adjuntos.</span>
-        </div>
-
-        <div class="help-row" style="margin-top:10px;">
-          <span style="font-size:0.82rem;margin-top:1px;">📅</span>
-          <span><strong style="color:var(--text-primary);">Inicio / Fin</strong> — Ventana de validez de la KDM. Fuera de este rango, la clave no funciona y el proyector no puede abrir la película. La hora exacta es importante.</span>
-        </div>
-
-        <div class="help-row" style="margin-top:14px;">
+        <div class="help-row" style="margin-top:12px;">
           <div class="help-dot" style="background:#22c55e;"></div>
-          <span><strong style="color:var(--text-primary);">Verde — Activa</strong> — La KDM está en vigor ahora mismo.</span>
+          <span><strong style="color:var(--text-primary);">Verde — Activa.</strong> La KDM funciona ahora mismo. El proyector puede abrir la película.</span>
         </div>
         <div class="help-row">
           <div class="help-dot" style="background:#f59e0b;"></div>
-          <span><strong style="color:var(--text-primary);">Amarillo — Caduca pronto</strong> — Quedan menos de 36 horas para que expire. Conviene revisarla.</span>
+          <span><strong style="color:var(--text-primary);">Amarillo — Caduca pronto.</strong> Quedan menos de 36 horas. Asegúrate de que la renovación esté en camino.</span>
         </div>
         <div class="help-row">
           <div class="help-dot" style="background:#3b82f6;"></div>
-          <span><strong style="color:var(--text-primary);">Azul — Por activarse</strong> — La KDM aún no ha entrado en vigor. Se activará en menos de 24 horas.</span>
+          <span><strong style="color:var(--text-primary);">Azul — Por activarse.</strong> La KDM ya está recibida pero todavía no ha entrado en vigor. Se activa sola cuando llegue su hora.</span>
         </div>
         <div class="help-row">
           <div class="help-dot" style="background:#ef4444;"></div>
-          <span><strong style="color:var(--text-primary);">Rojo — Caducada</strong> — La KDM ha expirado. Si sigue apareciendo en la lista, se archivará automáticamente a los 5 días.</span>
+          <span><strong style="color:var(--text-primary);">Rojo — Caducada.</strong> La clave ha expirado. El proyector ya no puede abrir la película con ella.</span>
         </div>
       </div>
 
       <hr class="help-divider"/>
 
+      <!-- FLUJO DE TRABAJO -->
       <div class="help-section">
-        <div class="help-section-title">Filtros y búsqueda</div>
-        <p>Usa la barra de filtros para ver solo las KDMs en un estado concreto: activas, que caducan pronto, por activarse o caducadas. El buscador filtra en tiempo real por título de película o distribuidora.</p>
-      </div>
-
-      <div class="help-section">
-        <div class="help-section-title">Añadir y editar KDMs</div>
-        <p>Las KDMs se crean automáticamente cuando el script de Gmail detecta un correo nuevo de una distribuidora conocida. Si una KDM llega en un formato no reconocido, puedes añadirla manualmente con el botón <strong style="color:var(--text-primary);">+ Añadir KDM</strong>.</p>
-        <p>Puedes editar cualquier fila haciendo clic en el icono de lápiz que aparece al pasar el ratón. Las filas creadas manualmente se marcan con la etiqueta <span style="background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:0.04em;">MANUAL</span>.</p>
-      </div>
-
-      <div class="help-section">
-        <div class="help-section-title">Archivado automático</div>
-        <p>Las KDMs caducadas se mueven automáticamente a la pestaña <strong style="color:var(--text-primary);">Archivadas</strong> pasados 5 días desde su fecha de fin. Puedes consultarlas en cualquier momento desde esa pestaña.</p>
+        <div class="help-section-title">Cómo funciona el día a día</div>
+        <p>No tienes que hacer nada manualmente. Cuando la distribuidora manda una KDM al correo del cine, la herramienta la detecta sola y la añade a la lista automáticamente en unos 15 minutos.</p>
+        <p>Si necesitas descargar los archivos KDM para cargarlos en el proyector, haz clic en el <strong style="color:var(--text-primary);">icono de correo ✉</strong> de la fila — se abre directamente el correo original en Gmail con los archivos adjuntos.</p>
+        <p>Las KDMs caducadas desaparecen solas de la lista principal. Si llega una KDM nueva para una película que ya tenía una anterior caducada, la vieja se archiva automáticamente. Puedes consultar el historial en la pestaña <strong style="color:var(--text-primary);">Archivadas</strong>.</p>
       </div>
 
       <hr class="help-divider"/>
 
+      <!-- MÁS EN DETALLE -->
       <div class="help-section">
-        <div class="help-section-title">Opciones avanzadas</div>
+        <div class="help-section-title">Más en detalle</div>
 
         <div class="help-row">
-          <span class="help-kbd">Ctrl+S</span>
-          <span>Guarda los cambios al instante. En Mac usa <span class="help-kbd">⌘+S</span>. Equivalente al botón <strong style="color:var(--text-primary);">Guardar</strong> del header.</span>
+          <span style="font-size:0.82rem;margin-top:1px;">🔍</span>
+          <span><strong style="color:var(--text-primary);">Buscador y filtros</strong> — Escribe el nombre de una película para encontrarla rápido. Los botones de estado (Activas, Caducan pronto…) filtran la lista de golpe.</span>
         </div>
 
         <div class="help-row" style="margin-top:10px;">
-          <span class="help-kbd">60s</span>
-          <span><strong style="color:var(--text-primary);">Autoguardado</strong> — Si no guardas manualmente, los cambios se sincronizan automáticamente tras 60 segundos. Mientras haya cambios pendientes (punto naranja), la lista no se recargará para no sobreescribir tu trabajo.</span>
+          <span style="font-size:0.82rem;margin-top:1px;">✏️</span>
+          <span><strong style="color:var(--text-primary);">Editar una KDM</strong> — Pasa el ratón por una fila y aparece el icono de lápiz. Úsalo para corregir datos si algo ha salido mal al importarse.</span>
         </div>
 
         <div class="help-row" style="margin-top:10px;">
-          <span style="font-size:0.82rem;margin-top:1px;">⚙</span>
-          <span><strong style="color:var(--text-primary);">Google Sheets</strong> — Haz clic en el indicador de sync del header para configurar la conexión. Solo hay que hacerlo una vez por dispositivo.</span>
+          <span style="font-size:0.82rem;margin-top:1px;">➕</span>
+          <span><strong style="color:var(--text-primary);">Añadir manualmente</strong> — Si una KDM llega de una distribuidora que la herramienta no reconoce, aparecerá con el aviso <span style="background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;">MANUAL</span>. Edítala para completar los datos. También puedes añadir una desde cero con el botón <strong style="color:var(--text-primary);">+ Añadir KDM</strong>.</span>
         </div>
 
         <div class="help-row" style="margin-top:10px;">
-          <span style="font-size:0.82rem;margin-top:1px;">📬</span>
-          <span><strong style="color:var(--text-primary);">Nuevas distribuidoras</strong> — Si recibes una KDM de una distribuidora que la herramienta no reconoce automáticamente, comunícalo para añadir el parser correspondiente. Mientras tanto, añádela manualmente.</span>
+          <span style="font-size:0.82rem;margin-top:1px;">🗂</span>
+          <span><strong style="color:var(--text-primary);">Archivadas</strong> — Las KDMs caducadas se mueven aquí solas: inmediatamente si hay una renovación activa, o pasados 5 días si no. Sirven como historial.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">💾</span>
+          <span><strong style="color:var(--text-primary);">Guardado</strong> — Los cambios se guardan solos cada 60 segundos. Si quieres guardar al momento, usa el botón <strong style="color:var(--text-primary);">Guardar</strong> del header o <span class="help-kbd">Ctrl+S</span>. El punto de colores junto al texto "Sin conectar / Sincronizado" indica el estado de la conexión con Google Sheets.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">📁</span>
+          <span><strong style="color:var(--text-primary);">Archivar películas fuera de cartelera</strong> — Cuando una película sale de cartelera pero su KDM sigue activa, puedes sacarla de la lista principal sin eliminarla. Haz clic en <strong style="color:var(--text-primary);">Seleccionar</strong> en la barra superior, marca las películas que quieras y pulsa <strong style="color:var(--text-primary);">Archivar seleccionadas</strong> en la barra que aparece abajo. Se moverán a la sección "Fuera de cartelera" dentro de la pestaña Archivadas, donde puedes consultarlas o restaurarlas cuando quieras.</span>
+        </div>
+          <span><strong style="color:var(--text-primary);">Distribuidora no reconocida</strong> — Si aparece una KDM marcada como ⚠ Revisar, es que llegó de una distribuidora nueva. Comunícalo para que se añada al sistema. Mientras tanto, edítala manualmente.</span>
         </div>
       </div>
 
@@ -1345,7 +1482,7 @@
 
       <div class="help-credits">
         <strong>KDM Manager — Cines Babel</strong><br>
-        Versión actual: <strong>v1.0</strong><br>
+        Versión actual: <strong>v1.7</strong><br>
         Diseño y desarrollo por <strong>Pablo Goitia</strong>
       </div>
 
@@ -1499,12 +1636,17 @@ const CONFIG = {
 // ═══════════════════════════════════════════════
 let kdms = [];
 let archived = [];
+let manualArchived = []; // KDMs activas archivadas manualmente
 let currentFilter = 'all';
 let editingId = null;
 let webAppUrl = '';
 let hasPendingChanges = false;
 let autoSaveTimer = null;
 let autoReloadTimer = null;
+let selectMode = false;
+let selectedIds = new Set();
+let sortCol = 'received'; // columna activa: 'film' | 'start' | 'end' | 'received'
+let sortDir = 'desc';     // 'asc' | 'desc'
 
 // ═══════════════════════════════════════════════
 // DATOS DE DEMO
@@ -1644,7 +1786,10 @@ function renderRow(kdm) {
   ).join('');
 
   return `
-    <tr data-id="${kdm.id}" data-status="${status}">
+    <tr data-id="${kdm.id}" data-status="${status}" onclick="toggleRowSelect('${kdm.id}')" class="${selectedIds.has(kdm.id) ? 'selected' : ''}">
+      <td class="col-check" style="display:${selectMode ? '' : 'none'}">
+        <input type="checkbox" class="row-check" data-id="${kdm.id}" ${selectedIds.has(kdm.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleRowSelect('${kdm.id}')">
+      </td>
       <td class="col-film">
         <div class="film-name">${kdm.film}${kdm.manual ? '<span class="manual-badge">Manual</span>' : ''}</div>
         <div class="film-dist">${kdm.dist || '—'}</div>
@@ -1732,12 +1877,30 @@ function renderTable() {
   const tbody = document.getElementById('kdmTableBody');
   const empty = document.getElementById('emptyState');
 
-  // Auto-archive: move expired KDMs older than ARCHIVE_DAYS
+  // ── AUTO-ARCHIVADO ──────────────────────────────────────────────
+  // Regla 1: caducadas hace más de ARCHIVE_DAYS días → archivar siempre
+  // Regla 2: caducadas con renovación activa o por activarse → archivar inmediatamente
   const now = new Date();
+
   const toArchive = kdms.filter(k => {
     const end = new Date(k.end);
-    return now > end && (now - end) / 86400000 > CONFIG.ARCHIVE_DAYS;
+    if (now <= end) return false; // no caducada, ignorar
+
+    // Regla 1: más de ARCHIVE_DAYS días caducada
+    if ((now - end) / 86400000 > CONFIG.ARCHIVE_DAYS) return true;
+
+    // Regla 2: ¿existe otra KDM de la misma película que esté activa o por activarse?
+    const filmNorm = k.film.trim().toLowerCase();
+    const tieneRenovacion = kdms.some(other => {
+      if (other.id === k.id) return false;
+      const otherFilm = other.film.trim().toLowerCase();
+      if (otherFilm !== filmNorm) return false;
+      const otherStatus = getStatus(other);
+      return otherStatus === 'active' || otherStatus === 'expiring' || otherStatus === 'pending';
+    });
+    return tieneRenovacion;
   });
+
   if (toArchive.length) {
     archived = [...archived, ...toArchive];
     kdms = kdms.filter(k => !toArchive.find(a => a.id === k.id));
@@ -1750,8 +1913,8 @@ function renderTable() {
     return matchSearch && matchFilter;
   });
 
-  // Sort by received date desc
-  rows.sort((a, b) => new Date(b.received) - new Date(a.received));
+  // Sort
+  rows = sortRows(rows);
 
   tbody.innerHTML = rows.map(renderRow).join('');
   empty.style.display = rows.length === 0 ? 'block' : 'none';
@@ -1761,16 +1924,54 @@ function renderTable() {
 
 function renderArchived() {
   const search = (document.getElementById('searchArchived')?.value || '').toLowerCase();
-  const tbody = document.getElementById('archivedTableBody');
-  const empty = document.getElementById('emptyArchived');
 
-  let rows = archived.filter(k =>
+  // ── Sección manual ──
+  const manualBody  = document.getElementById('manualArchivedBody');
+  const emptyManual = document.getElementById('emptyManualArchived');
+  let manualRows = manualArchived.filter(k =>
     !search || k.film.toLowerCase().includes(search) || (k.dist || '').toLowerCase().includes(search)
   );
-  rows.sort((a, b) => new Date(b.end) - new Date(a.end));
+  manualRows.sort((a, b) => new Date(b.received) - new Date(a.received));
+  manualBody.innerHTML = manualRows.map(k => {
+    const status = getStatus(k);
+    const cplsHtml = (k.cpls || []).map(c => `<span class="cpl-tag">${c}</span>`).join('');
+    const mailHref = k.mailId ? `https://mail.google.com/mail/u/0/#inbox/${k.mailId}` : '#';
+    return `
+      <tr>
+        <td class="col-film">
+          <div class="film-name">${k.film}</div>
+          <div class="film-dist">${k.dist || '—'}</div>
+        </td>
+        <td class="col-cpls"><div class="cpl-list">${cplsHtml || '<span style="color:var(--text-muted)">—</span>'}</div></td>
+        <td class="col-mail">
+          <a class="mail-btn" href="${mailHref}" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </a>
+        </td>
+        <td class="col-date"><div class="date-main">${fmtDate(k.start)}</div><div class="date-time">${fmtTime(k.start)}</div></td>
+        <td class="col-date"><div class="date-main">${fmtDate(k.end)}</div><div class="date-time">${fmtTime(k.end)}</div></td>
+        <td class="col-status">
+          <div class="status-pill ${status}"><span class="dot"></span>${statusLabel(status)}</div>
+          <div class="days-left" data-short="${daysLeftData(k).short}" data-long="${daysLeftData(k).long}"
+            onmouseenter="this.textContent=this.dataset.long" onmouseleave="this.textContent=this.dataset.short"
+          >${daysLeftData(k).short}</div>
+        </td>
+        <td class="col-actions" style="opacity:1">
+          <button class="btn-restore" onclick="restoreKdm('${k.id}')">↩ Restaurar</button>
+        </td>
+      </tr>`;
+  }).join('');
+  emptyManual.style.display = manualRows.length === 0 ? 'block' : 'none';
 
-  tbody.innerHTML = rows.map(renderArchivedRow).join('');
-  empty.style.display = rows.length === 0 ? 'block' : 'none';
+  // ── Sección caducadas ──
+  const tbody      = document.getElementById('archivedTableBody');
+  const emptyArch  = document.getElementById('emptyArchived');
+  let expiredRows = archived.filter(k =>
+    !search || k.film.toLowerCase().includes(search) || (k.dist || '').toLowerCase().includes(search)
+  );
+  expiredRows.sort((a, b) => new Date(b.end) - new Date(a.end));
+  tbody.innerHTML = expiredRows.map(renderArchivedRow).join('');
+  emptyArch.style.display = expiredRows.length === 0 ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════════
@@ -1879,6 +2080,7 @@ function saveLocal() {
   try {
     localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(kdms));
     localStorage.setItem(CONFIG.ARCHIVED_KEY, JSON.stringify(archived));
+    localStorage.setItem('kdm_manual_archived', JSON.stringify(manualArchived));
   } catch(e) {}
 }
 
@@ -1886,8 +2088,10 @@ function loadLocal() {
   try {
     const d = localStorage.getItem(CONFIG.STORAGE_KEY);
     const a = localStorage.getItem(CONFIG.ARCHIVED_KEY);
+    const m = localStorage.getItem('kdm_manual_archived');
     if (d) kdms = JSON.parse(d);
     if (a) archived = JSON.parse(a);
+    if (m) manualArchived = JSON.parse(m);
   } catch(e) {}
 }
 
@@ -1950,7 +2154,7 @@ async function syncToSheets() {
 
   setSyncStatus('syncing', 'Guardando…');
   try {
-    const payload = { kdms, archived };
+    const payload = { kdms, archived, manualArchived };
     await fetch(webAppUrl, {
       method: 'POST',
       mode: 'no-cors',
@@ -1978,6 +2182,7 @@ async function loadFromSheets() {
     const data = await res.json();
     if (data.kdms) { kdms = data.kdms; saveLocal(); }
     if (data.archived) { archived = data.archived; saveLocal(); }
+    if (data.manualArchived) { manualArchived = data.manualArchived; saveLocal(); }
     setSyncStatus('synced', 'Sincronizado');
     renderTable();
     renderArchived();
@@ -2078,6 +2283,105 @@ function showToast(icon, msg, type) {
 }
 
 // ═══════════════════════════════════════════════
+// ORDENACIÓN
+// ═══════════════════════════════════════════════
+function setSort(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = col === 'film' ? 'asc' : 'desc';
+  }
+  updateSortHeaders();
+  renderTable();
+}
+
+function updateSortHeaders() {
+  ['film', 'start', 'end'].forEach(col => {
+    const th = document.getElementById('sort-' + col);
+    if (!th) return;
+    th.classList.remove('asc', 'desc');
+    if (sortCol === col) th.classList.add(sortDir);
+  });
+}
+
+function sortRows(rows) {
+  return rows.sort((a, b) => {
+    let valA, valB;
+    if (sortCol === 'film') {
+      valA = a.film.toLowerCase();
+      valB = b.film.toLowerCase();
+      return sortDir === 'asc'
+        ? valA.localeCompare(valB, 'es')
+        : valB.localeCompare(valA, 'es');
+    }
+    valA = new Date(a[sortCol]);
+    valB = new Date(b[sortCol]);
+    return sortDir === 'asc' ? valA - valB : valB - valA;
+  });
+}
+
+// ═══════════════════════════════════════════════
+// MODO SELECCIÓN
+// ═══════════════════════════════════════════════
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  document.body.classList.toggle('selecting', selectMode);
+  document.getElementById('selectModeBtn').classList.toggle('active', selectMode);
+  document.getElementById('thCheck').style.display = selectMode ? '' : 'none';
+  updateSelectionBar();
+  renderTable();
+}
+
+function toggleRowSelect(id) {
+  if (!selectMode) return;
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateSelectionBar();
+  // Actualizar clase selected en la fila sin re-render completo
+  document.querySelectorAll(`tr[data-id="${id}"]`).forEach(tr => {
+    tr.classList.toggle('selected', selectedIds.has(id));
+  });
+  // Sincronizar checkbox
+  const cb = document.querySelector(`input.row-check[data-id="${id}"]`);
+  if (cb) cb.checked = selectedIds.has(id);
+}
+
+function updateSelectionBar() {
+  const bar = document.getElementById('selectionBar');
+  const count = selectedIds.size;
+  document.getElementById('selCount').textContent = count;
+  bar.classList.toggle('visible', selectMode && count > 0);
+}
+
+function archiveSelected() {
+  if (selectedIds.size === 0) return;
+  const toMove = kdms.filter(k => selectedIds.has(k.id)).map(k => ({ ...k, archivedManually: true }));
+  manualArchived = [...toMove, ...manualArchived];
+  kdms = kdms.filter(k => !selectedIds.has(k.id));
+  selectedIds.clear();
+  selectMode = false;
+  document.body.classList.remove('selecting');
+  document.getElementById('selectModeBtn').classList.remove('active');
+  document.getElementById('thCheck').style.display = 'none';
+  updateSelectionBar();
+  scheduleSave();
+  renderTable();
+}
+
+function restoreKdm(id) {
+  const kdm = manualArchived.find(k => k.id === id);
+  if (!kdm) return;
+  const { archivedManually, ...restored } = kdm;
+  kdms.unshift(restored);
+  manualArchived = manualArchived.filter(k => k.id !== id);
+  scheduleSave();
+  renderTable();
+  renderArchived();
+}
+
+// ═══════════════════════════════════════════════
 // TEMA
 // ═══════════════════════════════════════════════
 function toggleTheme() {
@@ -2120,6 +2424,7 @@ function init() {
   }
 
   renderTable();
+  updateSortHeaders();
 
   // Ctrl+S / Cmd+S
   document.addEventListener('keydown', e => {
@@ -2132,7 +2437,7 @@ function init() {
 
 init();
 </script>
-<footer>v1.2 · Diseño por Pablo Goitia</footer>
+<footer>v1.7 · Diseño por Pablo Goitia</footer>
 
 </body>
 </html>
