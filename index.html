@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KDM Manager — Cines Babel · v1.2</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🔐</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── PANTALLA DE LOGIN ── */
+  #lockScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0d1120;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  #lockScreen.hidden { display: none; }
+  .lock-box {
+    background: #1a2030;
+    border: 1px solid #252d3d;
+    border-radius: 18px;
+    padding: 40px 36px;
+    width: 340px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+  .lock-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #3b82f6, #6fa8ff);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin: 0 auto 20px;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+  }
+  .lock-title {
+    font-size: 1rem; font-weight: 800;
+    color: #e8edf8; margin-bottom: 4px;
+  }
+  .lock-subtitle {
+    font-size: 0.72rem; color: #6b7a99;
+    margin-bottom: 24px; line-height: 1.5;
+  }
+  .lock-input {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid #252d3d; border-radius: 10px;
+    background: #0d1120; color: #e8edf8;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.88rem; font-weight: 500;
+    outline: none; text-align: center;
+    letter-spacing: 0.08em;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    margin-bottom: 12px;
+  }
+  .lock-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .lock-input.error {
+    border-color: #f87171;
+    box-shadow: 0 0 0 3px rgba(248,113,113,0.15);
+    animation: shake 0.3s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .lock-btn {
+    width: 100%; padding: 10px;
+    background: #3b82f6; color: #fff;
+    border: none; border-radius: 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+  }
+  .lock-btn:hover { opacity: 0.9; box-shadow: 0 6px 18px rgba(59,130,246,0.45); }
+  .lock-error {
+    font-size: 0.68rem; color: #f87171;
+    margin-top: 10px; min-height: 18px;
+  }
+  /* ═══════════════════════════════════════════
+     VARIABLES & RESET
+  ═══════════════════════════════════════════ */
+  :root {
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-soft: rgba(59,130,246,0.12);
+
+    --status-green: #22c55e;
+    --status-green-bg: rgba(34,197,94,0.12);
+    --status-yellow: #f59e0b;
+    --status-yellow-bg: rgba(245,158,11,0.12);
+    --status-red: #ef4444;
+    --status-red-bg: rgba(239,68,68,0.12);
+    --status-blue: #3b82f6;
+    --status-blue-bg: rgba(59,130,246,0.12);
+
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f1218;
+    --bg-secondary: #181d26;
+    --bg-card: #1a2030;
+    --bg-hover: #1f2840;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --text-primary: #e8edf8;
+    --text-secondary: #6b7a99;
+    --text-muted: #353f54;
+    --header-bg: #080a0f;
+    --header-border: rgba(255,255,255,0.06);
+    --input-bg: #1a2030;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+    --accent-soft: rgba(91,150,247,0.12);
+    --accent-dim: rgba(91,150,247,0.1);
+  }
+
+  [data-theme="light"] {
+    --bg: #f6f8fc;
+    --bg-secondary: #f0f4fa;
+    --bg-card: #ffffff;
+    --bg-hover: rgba(63,127,240,0.07);
+    --border: #e4eaf4;
+    --border-strong: #d0d8ec;
+    --text-primary: #141c2e;
+    --text-secondary: #6b7a99;
+    --text-muted: #b0bcd4;
+    --header-bg: #141c2e;
+    --header-border: rgba(0,0,0,0.08);
+    --input-bg: #ffffff;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --accent-soft: #e8f0fe;
+    --accent-dim: rgba(63,127,240,0.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  /* ═══════════════════════════════════════════
+     HEADER (fiel al original de ingestas)
+  ═══════════════════════════════════════════ */
+  .header {
+    background: var(--header-bg);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 80% 50%, rgba(59,130,246,0.15) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #6fa8ff);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.45);
+  }
+  .header-titles { display: flex; flex-direction: column; gap: 1px; }
+  .header-eyebrow {
+    font-size: 0.56rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+  .header-title {
+    font-size: 0.95rem; font-weight: 800;
+    color: #f6f8fc; letter-spacing: -0.01em; line-height: 1.2;
+  }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  /* Contador */
+  .header-counter {
+    font-size: 0.62rem; font-weight: 700;
+    color: var(--accent);
+    background: rgba(59,130,246,0.15);
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid rgba(59,130,246,0.25);
+    white-space: nowrap;
+  }
+
+  /* Sync status */
+  .sync-status {
+    font-size: 0.6rem; font-weight: 500;
+    color: rgba(255,255,255,0.25);
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border-radius: 8px;
+  }
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0; transition: background 0.3s;
+  }
+  .sync-dot.disconnected { background: rgba(255,255,255,0.15); }
+  .sync-dot.pending      { background: #fb923c; animation: pulse 0.8s infinite; }
+  .sync-dot.syncing      { background: #fbbf24; animation: pulse 1s infinite; }
+  .sync-dot.synced       { background: #34d399; }
+  .sync-dot.error        { background: #f87171; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Botón guardar */
+  .btn-save-header {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.62rem; font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.55);
+    padding: 5px 12px; border-radius: 8px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-save-header:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.95); }
+  .btn-save-header.pending-save {
+    background: rgba(59,130,246,0.2);
+    border-color: rgba(59,130,246,0.4);
+    color: #7fb3ff;
+  }
+  .btn-save-header.pending-save:hover {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+  }
+
+  /* Botones secundarios del header */
+  .btn-header {
+    font-size: 0.6rem; font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4);
+    padding: 5px 11px; border-radius: 8px;
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-header:hover { background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.9); }
+
+  /* Toggle tema (slider) */
+  .theme-toggle {
+    width: 32px; height: 18px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; cursor: pointer;
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .theme-toggle::after {
+    content: ''; position: absolute;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    top: 2px; left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  [data-theme="dark"] .theme-toggle { background: rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.35); }
+  [data-theme="dark"] .theme-toggle::after { transform: translateX(14px); background: var(--accent); }
+
+  /* ═══════════════════════════════════════════
+     TABS
+  ═══════════════════════════════════════════ */
+  .tabs-bar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tab {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: var(--text-primary); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ═══════════════════════════════════════════
+     MAIN CONTENT
+  ═══════════════════════════════════════════ */
+  .main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+
+  /* ═══════════════════════════════════════════
+     TOOLBAR
+  ═══════════════════════════════════════════ */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 360px;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px; height: 15px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 8px 14px 8px 36px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus { border-color: var(--accent); }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-right: 2px;
+  }
+
+  .filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  .filter-btn.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .filter-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .add-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    border: none;
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .add-btn:hover { background: var(--accent-hover); }
+
+  /* ═══════════════════════════════════════════
+     TABLE
+  ═══════════════════════════════════════════ */
+  .table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg-hover); }
+
+  tbody td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  /* Col widths */
+  .col-film { min-width: 160px; }
+  .col-cpls { min-width: 200px; }
+  .col-mail { width: 60px; text-align: center; }
+  .col-date { width: 130px; white-space: nowrap; }
+  .col-status { width: 130px; }
+  .col-actions { width: 50px; text-align: center; }
+
+  /* Film cell */
+  .film-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .film-dist {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .film-recep {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* CPL list */
+  .cpl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .cpl-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.02em;
+    word-break: break-all;
+    white-space: normal;
+  }
+
+  /* Mail button */
+  .mail-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .mail-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.08);
+  }
+
+  .mail-btn svg { width: 14px; height: 14px; }
+
+  /* Date cell */
+  .date-main {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .date-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* Status pill */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .status-pill.active {
+    background: var(--status-green-bg);
+    color: var(--status-green);
+  }
+  .status-pill.active .dot { background: var(--status-green); }
+
+  .status-pill.expiring {
+    background: var(--status-yellow-bg);
+    color: var(--status-yellow);
+  }
+  .status-pill.expiring .dot { background: var(--status-yellow); }
+
+  .status-pill.expired {
+    background: var(--status-red-bg);
+    color: var(--status-red);
+  }
+  .status-pill.expired .dot { background: var(--status-red); }
+
+  .status-pill.pending {
+    background: var(--status-blue-bg);
+    color: var(--status-blue);
+  }
+  .status-pill.pending .dot { background: var(--status-blue); }
+
+  .days-left {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    cursor: default;
+  }
+
+  /* Row actions */
+  .row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  tbody tr:hover .row-actions { opacity: 1; }
+
+  .action-btn {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .action-btn.delete:hover { background: var(--status-red-bg); color: var(--status-red); border-color: var(--status-red); }
+  .action-btn svg { width: 12px; height: 12px; }
+
+  /* Manual badge */
+  .manual-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(245,158,11,0.12);
+    color: var(--status-yellow);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; font-weight: 500; }
+  .empty-state small { font-size: 12px; display: block; margin-top: 4px; }
+
+  /* ═══════════════════════════════════════════
+     SYNC DOT STATES
+  ═══════════════════════════════════════════ */
+  .sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .sync-dot.disconnected { background: #4a5568; }
+  .sync-dot.pending      { background: #f97316; animation: blink 0.9s infinite; }
+  .sync-dot.syncing      { background: #f59e0b; animation: blink 0.6s infinite; }
+  .sync-dot.synced       { background: #22c55e; }
+  .sync-dot.error        { background: #ef4444; animation: blink 1.2s infinite; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.25; }
+  }
+
+  /* Save button glow when pending */
+  .header-btn.primary.pending-save {
+    box-shadow: 0 0 0 2px rgba(249,115,22,0.5);
+    background: #f97316 !important;
+  }
+
+  /* KDM modal (añadir/editar) */
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--border-strong); background: transparent;
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .modal-close svg { width: 13px; height: 13px; }
+  .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .form-input, .form-textarea {
+    background: var(--input-bg); border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm); padding: 9px 12px;
+    font-size: 13px; font-family: inherit; color: var(--text-primary);
+    outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer {
+    padding: 16px 24px 20px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+  .btn-cancel {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-strong);
+    background: transparent; font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .btn-cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .btn-kdm-save {
+    padding: 8px 20px; border-radius: 20px; border: none;
+    background: var(--accent); font-size: 13px; font-weight: 700;
+    color: white; cursor: pointer; font-family: inherit; transition: background 0.15s;
+  }
+  .btn-kdm-save:hover { background: var(--accent-hover); }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.25; }
+  }
+
+  /* ═══════════════════════════════════════════
+     TOAST
+  ═══════════════════════════════════════════ */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: var(--shadow);
+    z-index: 300;
+    display: flex; align-items: center; gap: 8px;
+    transform: translateY(8px);
+    opacity: 0;
+    transition: all 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.toast-error { border-color: rgba(239,68,68,0.3); }
+  .toast.toast-ok    { border-color: rgba(34,197,94,0.3); }
+
+  /* ═══════════════════════════════════════════
+     SHEETS MODAL — fiel al diseño de referencia
+  ═══════════════════════════════════════════ */
+  .sheets-modal {
+    max-width: 500px;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    overflow: hidden;
+    border: none !important;
+  }
+
+  .sheets-modal-body {
+    padding: 32px 32px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sheets-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f1117;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .sheets-subtitle {
+    font-size: 14px;
+    color: #4a5568;
+    line-height: 1.65;
+    margin-top: -10px;
+  }
+
+  .sheets-steps-box {
+    background: #eff6ff;
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+
+  .sheets-steps-heading {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1d4ed8;
+    margin-bottom: 10px;
+  }
+
+  .sheets-steps-list {
+    list-style: decimal;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sheets-steps-list li {
+    font-size: 13px;
+    color: #1d4ed8;
+    line-height: 1.5;
+  }
+
+  .sheets-steps-list a {
+    color: #1d4ed8;
+    text-decoration: underline;
+  }
+
+  .sheets-steps-list strong {
+    font-weight: 800;
+  }
+
+  .sheets-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sheets-field-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #4a5568;
+    letter-spacing: 0.08em;
+  }
+
+  .sheets-url-input {
+    width: 100%;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #0f1117;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .sheets-url-input:focus { border-color: #3b82f6; }
+  .sheets-url-input::placeholder { color: #a0aec0; }
+
+  .sheets-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 32px 32px;
+  }
+
+  .sheets-btn-cancel {
+    flex: 1;
+    padding: 14px;
+    border-radius: 50px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    color: #4a5568;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .sheets-btn-cancel:hover { background: #f8fafc; border-color: #cbd5e0; }
+
+  .sheets-btn-connect {
+    flex: 2;
+    padding: 14px;
+    border-radius: 50px;
+    border: none;
+    background: #3b82f6;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+
+  .sheets-btn-connect:hover { background: #2563eb; }
+
+  /* ═══════════════════════════════════════════
+     ARCHIVED TAB
+  ═══════════════════════════════════════════ */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ═══════════════════════════════════════════
+     MODAL (estilo fiel al original)
+  ═══════════════════════════════════════════ */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    padding: 28px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.15);
+  }
+
+  .modal h2 {
+    font-size: 1rem; font-weight: 800;
+    margin-bottom: 8px; color: var(--text-primary);
+  }
+
+  .modal > p {
+    font-size: 0.75rem; color: var(--text-secondary);
+    margin-bottom: 20px; line-height: 1.6;
+  }
+
+  .modal-hint {
+    background: var(--accent-soft);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+  .modal-hint a { color: var(--accent); }
+
+  .sheets-form-row { margin-bottom: 14px; }
+  .sheets-form-row label {
+    display: block; font-size: 0.63rem; font-weight: 700;
+    color: var(--text-secondary); margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .sheets-form-row input {
+    width: 100%; border: 1.5px solid var(--border-strong);
+    border-radius: 10px; padding: 9px 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.8rem; color: var(--text-primary);
+    background: var(--bg-secondary); outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .sheets-form-row input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 9px 20px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.78rem; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+  }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: transparent; color: var(--text-secondary);
+    border: 1.5px solid var(--border-strong); border-radius: 10px;
+    padding: 9px 20px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+  /* ═══════════════════════════════════════════
+     HELP MODAL (fiel al original)
+  ═══════════════════════════════════════════ */
+  .help-section { margin-bottom: 24px; }
+  .help-section:last-child { margin-bottom: 0; }
+  .help-section-title {
+    font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--accent);
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .help-section p {
+    font-size: 0.78rem; color: var(--text-secondary); line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .help-section p:last-child { margin-bottom: 0; }
+  .help-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 9px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.5;
+  }
+  .help-row:last-child { margin-bottom: 0; }
+  .help-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; font-weight: 800; letter-spacing: 0.04em;
+    border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
+    margin-top: 1px; text-transform: uppercase;
+  }
+  .help-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .help-kbd {
+    display: inline-flex; align-items: center;
+    background: var(--bg-secondary); border: 1px solid var(--border-strong);
+    border-radius: 5px; padding: 1px 7px;
+    font-size: 0.68rem; font-weight: 700; color: var(--text-primary);
+    font-family: monospace; flex-shrink: 0; margin-top: 1px;
+  }
+  .help-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .help-credits {
+    text-align: center; font-size: 0.68rem; color: var(--text-muted);
+    padding-top: 4px; line-height: 1.8;
+  }
+  .help-credits strong { color: var(--text-secondary); }
+  .modal-scroll { max-height: 68vh; overflow-y: auto; padding-right: 4px; }
+  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+  footer {
+    text-align: right;
+    padding: 12px 24px 20px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    user-select: none;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ PANTALLA DE LOGIN ═══ -->
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <div class="lock-title">Cines Babel · KDM Manager</div>
+    <div class="lock-subtitle">Herramienta de uso interno.<br>Introduce la contraseña para continuar.</div>
+    <input class="lock-input" id="lockInput" type="password"
+      placeholder="Contraseña"
+      onkeydown="if(event.key==='Enter')checkPassword()"/>
+    <button class="lock-btn" onclick="checkPassword()">Entrar</button>
+    <div class="lock-error" id="lockError"></div>
+    <div style="margin-top:20px;font-size:0.6rem;color:rgba(255,255,255,0.12);letter-spacing:0.08em;">v1.0</div>
+  </div>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-icon">🔐</div>
+    <div class="header-titles">
+      <span class="header-eyebrow">Cines Babel</span>
+      <span class="header-title">KDM Manager</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="header-counter"><span id="countNum">—</span> KDMs</span>
+    <div class="sync-status" id="syncStatus" title="Estado de sincronización">
+      <span class="sync-dot disconnected" id="syncDot"></span>
+      <span id="syncText">Sin conectar</span>
+    </div>
+    <button class="btn-save-header" id="saveBtn" onclick="saveNow()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Guardar
+    </button>
+    <button class="btn-header" onclick="openSheetsModal()">⚙ Google Sheets</button>
+    <button class="btn-header" onclick="openHelp()">? Ayuda</button>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Modo claro/oscuro"></div>
+  </div>
+</header>
+
+<!-- ═══ TABS ═══ -->
+<div class="tabs-bar">
+  <div class="tab active" onclick="switchTab('active')">KDMs Activas</div>
+  <div class="tab" onclick="switchTab('archived')">Archivadas</div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+  <!-- ACTIVE TAB -->
+  <div class="tab-content active" id="tab-active">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" placeholder="Buscar por película o distribuidora…" oninput="filterTable()" id="searchInput">
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Estado</span>
+        <button class="filter-btn active" onclick="setFilter('all', this)">Todas</button>
+        <button class="filter-btn" onclick="setFilter('active', this)">
+          <span class="filter-dot" style="background:var(--status-green)"></span> Activas
+        </button>
+        <button class="filter-btn" onclick="setFilter('expiring', this)">
+          <span class="filter-dot" style="background:var(--status-yellow)"></span> Caducan pronto
+        </button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">
+          <span class="filter-dot" style="background:var(--status-blue)"></span> Por activarse
+        </button>
+        <button class="filter-btn" onclick="setFilter('expired', this)">
+          <span class="filter-dot" style="background:var(--status-red)"></span> Caducadas
+        </button>
+      </div>
+
+      <button class="add-btn" onclick="openModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Añadir KDM
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-film">Película</th>
+            <th class="col-cpls">Archivos CPL</th>
+            <th class="col-mail">Correo</th>
+            <th class="col-date">Inicio</th>
+            <th class="col-date">Fin</th>
+            <th class="col-status">Estado</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="kdmTableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <p>No hay KDMs que mostrar</p>
+        <small>Cambia el filtro o añade una manualmente</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVED TAB -->
+  <div class="tab-content" id="tab-archived">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" placeholder="Buscar en archivadas…" oninput="filterArchived()" id="searchArchived">
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-film">Película</th>
+            <th class="col-cpls">Archivos CPL</th>
+            <th class="col-mail">Correo</th>
+            <th class="col-date">Inicio</th>
+            <th class="col-date">Fin</th>
+            <th class="col-status">Caducó</th>
+          </tr>
+        </thead>
+        <tbody id="archivedTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyArchived" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <p>No hay KDMs archivadas</p>
+        <small>Las KDMs caducadas hace más de 5 días aparecerán aquí</small>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══ MODAL: AÑADIR / EDITAR KDM ═══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Añadir KDM</span>
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label class="form-label">Título de la película *</label>
+        <input class="form-input" type="text" id="formFilm" placeholder="Ej: Amarga Navidad">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Distribuidora</label>
+        <input class="form-input" type="text" id="formDist" placeholder="Ej: Deluxe, Antaviana, MPS…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Archivos CPL (uno por línea)</label>
+        <textarea class="form-textarea" id="formCpls" placeholder="AmargaNavidad_FTR_1_S_ES-XX_ES_51_4K&#10;AmargaNavidad_FTR_1_S_ES-XX_EN_51_4K"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Inicio *</label>
+          <input class="form-input" type="datetime-local" id="formStart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fin *</label>
+          <input class="form-input" type="datetime-local" id="formEnd">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Enlace al correo (Gmail ID)</label>
+        <input class="form-input" type="text" id="formMailId" placeholder="ID del correo de Gmail">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-kdm-save" onclick="saveKdm()">Guardar KDM</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: AYUDA ═══ -->
+<div class="modal-overlay" id="helpOverlay">
+  <div class="modal" style="width:560px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h2 style="margin:0;">Instrucciones</h2>
+      <button class="btn-secondary" onclick="closeHelp()" style="padding:5px 12px;font-size:0.72rem;">✕</button>
+    </div>
+    <div class="modal-scroll">
+
+      <div style="
+        background: rgba(245,158,11,0.08);
+        border: 1px solid rgba(245,158,11,0.25);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      ">
+        <span style="font-size:1rem;flex-shrink:0;margin-top:1px;">⚠️</span>
+        <p style="font-size:0.74rem;color:var(--text-secondary);line-height:1.65;margin:0;">
+          Esta herramienta está diseñada para agilizar la gestión de KDMs, pero puede cometer errores en la lectura o interpretación de correos. 
+          <strong style="color:var(--text-primary);">Ante cualquier duda, verifica siempre la información directamente en el correo original.</strong> 
+          No la uses como única fuente de verdad en situaciones críticas.
+        </p>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">¿Para qué sirve esta herramienta?</div>
+        <p>KDM Manager permite llevar el control de las claves KDM recibidas en Cines Babel. Las KDMs son las claves de descifrado que las distribuidoras envían por correo para que los proyectores puedan reproducir las películas DCP durante un periodo de tiempo determinado.</p>
+        <p>Los datos se sincronizan con Google Sheets y se leen automáticamente desde Gmail, lo que permite que todos los ordenadores del cine vean la misma información en tiempo real.</p>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">Columnas de la tabla</div>
+
+        <div class="help-row">
+          <span style="font-size:0.82rem;margin-top:1px;">🎬</span>
+          <span><strong style="color:var(--text-primary);">Película</strong> — Título de la película al que pertenece la KDM, junto con la distribuidora y la fecha en que se recibió el correo.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">📄</span>
+          <span><strong style="color:var(--text-primary);">Archivos CPL</strong> — Nombre técnico del archivo de contenido (Content Playlist). Una misma película puede tener varios CPLs si viene en distintos idiomas o versiones (OV, VE, subtitulada…).</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">✉️</span>
+          <span><strong style="color:var(--text-primary);">Correo</strong> — Acceso directo al correo original de la distribuidora. Haz clic en el icono para abrirlo en Gmail y descargar los archivos KDM adjuntos.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">📅</span>
+          <span><strong style="color:var(--text-primary);">Inicio / Fin</strong> — Ventana de validez de la KDM. Fuera de este rango, la clave no funciona y el proyector no puede abrir la película. La hora exacta es importante.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:14px;">
+          <div class="help-dot" style="background:#22c55e;"></div>
+          <span><strong style="color:var(--text-primary);">Verde — Activa</strong> — La KDM está en vigor ahora mismo.</span>
+        </div>
+        <div class="help-row">
+          <div class="help-dot" style="background:#f59e0b;"></div>
+          <span><strong style="color:var(--text-primary);">Amarillo — Caduca pronto</strong> — Quedan menos de 36 horas para que expire. Conviene revisarla.</span>
+        </div>
+        <div class="help-row">
+          <div class="help-dot" style="background:#3b82f6;"></div>
+          <span><strong style="color:var(--text-primary);">Azul — Por activarse</strong> — La KDM aún no ha entrado en vigor. Se activará en menos de 24 horas.</span>
+        </div>
+        <div class="help-row">
+          <div class="help-dot" style="background:#ef4444;"></div>
+          <span><strong style="color:var(--text-primary);">Rojo — Caducada</strong> — La KDM ha expirado. Si sigue apareciendo en la lista, se archivará automáticamente a los 5 días.</span>
+        </div>
+      </div>
+
+      <hr class="help-divider"/>
+
+      <div class="help-section">
+        <div class="help-section-title">Filtros y búsqueda</div>
+        <p>Usa la barra de filtros para ver solo las KDMs en un estado concreto: activas, que caducan pronto, por activarse o caducadas. El buscador filtra en tiempo real por título de película o distribuidora.</p>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">Añadir y editar KDMs</div>
+        <p>Las KDMs se crean automáticamente cuando el script de Gmail detecta un correo nuevo de una distribuidora conocida. Si una KDM llega en un formato no reconocido, puedes añadirla manualmente con el botón <strong style="color:var(--text-primary);">+ Añadir KDM</strong>.</p>
+        <p>Puedes editar cualquier fila haciendo clic en el icono de lápiz que aparece al pasar el ratón. Las filas creadas manualmente se marcan con la etiqueta <span style="background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:0.04em;">MANUAL</span>.</p>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">Archivado automático</div>
+        <p>Las KDMs caducadas se mueven automáticamente a la pestaña <strong style="color:var(--text-primary);">Archivadas</strong> pasados 5 días desde su fecha de fin. Puedes consultarlas en cualquier momento desde esa pestaña.</p>
+      </div>
+
+      <hr class="help-divider"/>
+
+      <div class="help-section">
+        <div class="help-section-title">Opciones avanzadas</div>
+
+        <div class="help-row">
+          <span class="help-kbd">Ctrl+S</span>
+          <span>Guarda los cambios al instante. En Mac usa <span class="help-kbd">⌘+S</span>. Equivalente al botón <strong style="color:var(--text-primary);">Guardar</strong> del header.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span class="help-kbd">60s</span>
+          <span><strong style="color:var(--text-primary);">Autoguardado</strong> — Si no guardas manualmente, los cambios se sincronizan automáticamente tras 60 segundos. Mientras haya cambios pendientes (punto naranja), la lista no se recargará para no sobreescribir tu trabajo.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">⚙</span>
+          <span><strong style="color:var(--text-primary);">Google Sheets</strong> — Haz clic en el indicador de sync del header para configurar la conexión. Solo hay que hacerlo una vez por dispositivo.</span>
+        </div>
+
+        <div class="help-row" style="margin-top:10px;">
+          <span style="font-size:0.82rem;margin-top:1px;">📬</span>
+          <span><strong style="color:var(--text-primary);">Nuevas distribuidoras</strong> — Si recibes una KDM de una distribuidora que la herramienta no reconoce automáticamente, comunícalo para añadir el parser correspondiente. Mientras tanto, añádela manualmente.</span>
+        </div>
+      </div>
+
+      <hr class="help-divider"/>
+
+      <div class="help-credits">
+        <strong>KDM Manager — Cines Babel</strong><br>
+        Versión actual: <strong>v1.0</strong><br>
+        Diseño y desarrollo por <strong>Pablo Goitia</strong>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: GOOGLE SHEETS CONFIG ═══ -->
+<div class="modal-overlay" id="sheetsModalOverlay">
+  <div class="modal" style="width:480px">
+    <h2>Conectar con Google Sheets</h2>
+    <p>Los datos se guardarán en una hoja de cálculo de Google y estarán disponibles en todos los ordenadores en tiempo real.</p>
+    <div class="modal-hint">
+      <strong>Pasos para configurar:</strong><br>
+      1. Ve a <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> y crea una hoja nueva.<br>
+      2. Ve a <strong>Extensiones → Apps Script</strong>, pega el script proporcionado y despliega como web app.<br>
+      3. Copia la URL del web app y pégala abajo.
+    </div>
+    <div class="sheets-form-row">
+      <label>URL del Web App (Apps Script)</label>
+      <input type="url" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+    </div>
+    <div id="sheetsStatus" style="display:none;font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:14px;"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="disconnectBtn" onclick="disconnectSheets()" style="display:none;color:#ef4444;border-color:#ef4444">Desconectar</button>
+      <button class="btn-secondary" onclick="closeSheetsModal()">Cancelar</button>
+      <button class="btn-primary" onclick="connectSheets()">Guardar y conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// AUTENTICACIÓN — SHA-256 en JS puro (sin crypto.subtle)
+// Compatible con cualquier navegador desde 2010
+// ═══════════════════════════════════════════════
+const PASS_HASH = 'd4c189bdba3b1ab923aec96102439efef0028e0e2a95f590ecb3c3dbad5d0a34';
+
+function sha256(str) {
+  function rightRotate(value, amount) {
+    return (value >>> amount) | (value << (32 - amount));
+  }
+  var mathPow = Math.pow;
+  var maxWord = mathPow(2, 32);
+  var i, j, result = '';
+  var words = [];
+  var asciiBitLength = str.length * 8;
+  var hash = [];
+  var k = [];
+  var primeCounter = 0;
+  var isComposite = {};
+  for (var candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter]  = (mathPow(candidate, .5)  * maxWord) | 0;
+      k[primeCounter++]   = (mathPow(candidate, 1/3) * maxWord) | 0;
+    }
+  }
+  str += '\x80';
+  while (str.length % 64 - 56) str += '\x00';
+  for (i = 0; i < str.length; i++) {
+    j = str.charCodeAt(i);
+    if (j >> 8) return '';
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength | 0);
+  for (j = 0; j < words.length;) {
+    var W = words.slice(j, j += 16);
+    var oldHash = hash.slice(0);
+    for (i = 0; i < 64; i++) {
+      var w15 = W[i - 15], w2 = W[i - 2];
+      var a = hash[0], e = hash[4];
+      var temp1 = hash[7]
+        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+        + ((e & hash[5]) ^ (~e & hash[6]))
+        + k[i]
+        + (W[i] = (i < 16) ? W[i] : (
+            W[i - 16]
+            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+            + W[i - 7]
+            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+          ) | 0);
+      var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+      hash.length = 8;
+    }
+    for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (i = 0; i < 8; i++) {
+    for (j = 3; j + 1; j--) {
+      var b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? '0' : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+
+function checkPassword() {
+  const input = document.getElementById('lockInput');
+  const error = document.getElementById('lockError');
+  const hash  = sha256(input.value);
+  if (hash === PASS_HASH) {
+    try { sessionStorage.setItem('kdm_auth', '1'); } catch(e) {}
+    document.getElementById('lockScreen').classList.add('hidden');
+    input.value = '';
+    error.textContent = '';
+  } else {
+    input.classList.add('error');
+    error.textContent = 'Contraseña incorrecta.';
+    setTimeout(function() { input.classList.remove('error'); }, 400);
+    input.value = '';
+    input.focus();
+  }
+}
+
+function initAuth() {
+  try {
+    if (sessionStorage.getItem('kdm_auth') === '1') {
+      document.getElementById('lockScreen').classList.add('hidden');
+      return;
+    }
+  } catch(e) {}
+  setTimeout(function() { document.getElementById('lockInput').focus(); }, 100);
+}
+
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const CONFIG = {
+  EXPIRING_HOURS: 36,
+  PENDING_HOURS: 24,
+  ARCHIVE_DAYS: 5,
+  AUTOSAVE_DELAY: 60000,    // 60s autoguardado
+  AUTORELOAD_INTERVAL: 10000, // 10s sincronización entre dispositivos
+  STORAGE_KEY: 'kdm_data',
+  ARCHIVED_KEY: 'kdm_archived',
+  SHEETS_URL_KEY: 'kdm_sheets_url',
+};
+
+// ═══════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════
+let kdms = [];
+let archived = [];
+let currentFilter = 'all';
+let editingId = null;
+let webAppUrl = '';
+let hasPendingChanges = false;
+let autoSaveTimer = null;
+let autoReloadTimer = null;
+
+// ═══════════════════════════════════════════════
+// DATOS DE DEMO
+// ═══════════════════════════════════════════════
+function loadDemoData() {
+  const now = new Date();
+  const h = (d) => new Date(now.getTime() + d * 3600000).toISOString();
+
+  return [
+    {
+      id: '1', film: 'Altas Capacidades', dist: 'Antaviana', manual: false,
+      cpls: ['AltasCapacidad_FTR_S_ES-XX_ES_51_2K_20260108_ANT_SMPTE_OV'],
+      start: h(-24 * 5), end: h(24 * 100),
+      mailId: '', received: h(-24 * 6)
+    },
+    {
+      id: '2', film: 'Hamnet', dist: 'MPS / Universal', manual: false,
+      cpls: ['Hamnet_FTR-3_F-178_EN-ES_ES_51_4K_UP_20251108_PXU_SMPTE_VF', 'Hamnet_FTR-3_F-178_EN-ES_ES_IAB_4K_UP_20251111_PXU_SMPTE_VF'],
+      start: h(-24 * 3), end: h(20),
+      mailId: '', received: h(-24 * 4)
+    },
+    {
+      id: '3', film: 'Amarga Navidad', dist: 'Deluxe', manual: false,
+      cpls: ['AmargaNavidad_FTR-1_S_ES-XX_ES_51_4K_WR_20260120_DLX_SMPTE_OV'],
+      start: h(2), end: h(24 * 30),
+      mailId: '', received: h(-24 * 1)
+    },
+    {
+      id: '4', film: 'La Grazia', dist: 'Antaviana', manual: true,
+      cpls: ['LaGrazia_FTR_S_ES-XX_ES_51_2K_ANT_SMPTE_OV'],
+      start: h(-24 * 10), end: h(-24 * 2),
+      mailId: '', received: h(-24 * 11)
+    },
+  ];
+}
+
+// ═══════════════════════════════════════════════
+// STATUS LOGIC
+// ═══════════════════════════════════════════════
+function getStatus(kdm) {
+  const now = new Date();
+  const start = new Date(kdm.start);
+  const end = new Date(kdm.end);
+  const hoursToEnd = (end - now) / 3600000;
+  const hoursToStart = (start - now) / 3600000;
+
+  if (now > end) return 'expired';
+  if (now < start) {
+    if (hoursToStart <= CONFIG.PENDING_HOURS) return 'pending';
+    return 'pending';
+  }
+  if (hoursToEnd <= CONFIG.EXPIRING_HOURS) return 'expiring';
+  return 'active';
+}
+
+function statusLabel(status) {
+  return { active: 'Activa', expiring: 'Caduca pronto', expired: 'Caducada', pending: 'Por activarse' }[status];
+}
+
+// ═══════════════════════════════════════════════
+// FORMATO DE TIEMPO RESTANTE
+// ═══════════════════════════════════════════════
+function formatDuration(totalHours, prefix, suffix) {
+  if (totalHours < 24) {
+    const h = Math.round(totalHours);
+    return { short: `${prefix}${h}h${suffix}`, long: `${prefix}menos de 1 día${suffix}` };
+  }
+  const totalDays = Math.floor(totalHours / 24);
+  const longText  = `${prefix}${totalDays} día${totalDays !== 1 ? 's' : ''}${suffix}`;
+
+  if (totalDays < 7) {
+    return { short: `${prefix}${totalDays}d${suffix}`, long: longText };
+  }
+  if (totalDays < 30) {
+    const weeks = Math.floor(totalDays / 7);
+    const days  = totalDays % 7;
+    const short = days > 0
+      ? `${prefix}${weeks}sem ${days}d${suffix}`
+      : `${prefix}${weeks}sem${suffix}`;
+    return { short, long: longText };
+  }
+  // 30+ días
+  const months = Math.floor(totalDays / 30);
+  const rem    = totalDays % 30;
+  const weeks  = Math.floor(rem / 7);
+  const days   = rem % 7;
+  let parts    = `${months}m`;
+  if (weeks > 0) parts += ` ${weeks}sem`;
+  if (days  > 0) parts += ` ${days}d`;
+  return { short: `${prefix}${parts}${suffix}`, long: longText };
+}
+
+function daysLeftData(kdm) {
+  const now    = new Date();
+  const end    = new Date(kdm.end);
+  const start  = new Date(kdm.start);
+  const status = getStatus(kdm);
+
+  if (status === 'expired') {
+    const h = (now - end) / 3600000;
+    return formatDuration(h, 'Caducó hace ', '');
+  }
+  if (status === 'pending') {
+    const h = (start - now) / 3600000;
+    return formatDuration(h, 'Activa en ', '');
+  }
+  // active o expiring
+  const h = (end - now) / 3600000;
+  return formatDuration(h, 'Caduca en ', '');
+}
+
+// ═══════════════════════════════════════════════
+// FORMATO FECHAS
+// ═══════════════════════════════════════════════
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function renderRow(kdm) {
+  const status = getStatus(kdm);
+  const mailHref = kdm.mailId
+    ? `https://mail.google.com/mail/u/0/#inbox/${kdm.mailId}`
+    : '#';
+  const mailTarget = kdm.mailId ? '_blank' : '';
+
+  const cplsHtml = (kdm.cpls || []).map(c =>
+    `<span class="cpl-tag" title="${c}">${c}</span>`
+  ).join('');
+
+  return `
+    <tr data-id="${kdm.id}" data-status="${status}">
+      <td class="col-film">
+        <div class="film-name">${kdm.film}${kdm.manual ? '<span class="manual-badge">Manual</span>' : ''}</div>
+        <div class="film-dist">${kdm.dist || '—'}</div>
+        <div class="film-recep">Recibida: ${fmtDate(kdm.received)}</div>
+      </td>
+      <td class="col-cpls">
+        <div class="cpl-list">${cplsHtml || '<span style="color:var(--text-muted)">—</span>'}</div>
+      </td>
+      <td class="col-mail">
+        <a class="mail-btn" href="${mailHref}" target="${mailTarget}" title="Abrir correo en Gmail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </a>
+      </td>
+      <td class="col-date">
+        <div class="date-main">${fmtDate(kdm.start)}</div>
+        <div class="date-time">${fmtTime(kdm.start)}</div>
+      </td>
+      <td class="col-date">
+        <div class="date-main">${fmtDate(kdm.end)}</div>
+        <div class="date-time">${fmtTime(kdm.end)}</div>
+      </td>
+      <td class="col-status">
+        <div class="status-pill ${status}">
+          <span class="dot"></span>${statusLabel(status)}
+        </div>
+        <div class="days-left"
+          data-short="${daysLeftData(kdm).short}"
+          data-long="${daysLeftData(kdm).long}"
+          onmouseenter="this.textContent=this.dataset.long"
+          onmouseleave="this.textContent=this.dataset.short"
+        >${daysLeftData(kdm).short}</div>
+      </td>
+      <td class="col-actions">
+        <div class="row-actions">
+          <button class="action-btn" onclick="editKdm('${kdm.id}')" title="Editar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="action-btn delete" onclick="deleteKdm('${kdm.id}')" title="Eliminar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderArchivedRow(kdm) {
+  const cplsHtml = (kdm.cpls || []).map(c =>
+    `<span class="cpl-tag" title="${c}">${c}</span>`
+  ).join('');
+  const mailHref = kdm.mailId ? `https://mail.google.com/mail/u/0/#inbox/${kdm.mailId}` : '#';
+
+  return `
+    <tr>
+      <td class="col-film">
+        <div class="film-name">${kdm.film}</div>
+        <div class="film-dist">${kdm.dist || '—'}</div>
+      </td>
+      <td class="col-cpls"><div class="cpl-list">${cplsHtml}</div></td>
+      <td class="col-mail">
+        <a class="mail-btn" href="${mailHref}" target="_blank" title="Abrir correo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </a>
+      </td>
+      <td class="col-date"><div class="date-main">${fmtDate(kdm.start)}</div><div class="date-time">${fmtTime(kdm.start)}</div></td>
+      <td class="col-date"><div class="date-main">${fmtDate(kdm.end)}</div><div class="date-time">${fmtTime(kdm.end)}</div></td>
+      <td class="col-status">
+        <div class="status-pill expired"><span class="dot"></span>Caducada</div>
+        <div class="days-left"
+          data-short="${daysLeftData(kdm).short}"
+          data-long="${daysLeftData(kdm).long}"
+          onmouseenter="this.textContent=this.dataset.long"
+          onmouseleave="this.textContent=this.dataset.short"
+        >${daysLeftData(kdm).short}</div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderTable() {
+  const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const tbody = document.getElementById('kdmTableBody');
+  const empty = document.getElementById('emptyState');
+
+  // Auto-archive: move expired KDMs older than ARCHIVE_DAYS
+  const now = new Date();
+  const toArchive = kdms.filter(k => {
+    const end = new Date(k.end);
+    return now > end && (now - end) / 86400000 > CONFIG.ARCHIVE_DAYS;
+  });
+  if (toArchive.length) {
+    archived = [...archived, ...toArchive];
+    kdms = kdms.filter(k => !toArchive.find(a => a.id === k.id));
+    saveLocal();
+  }
+
+  let rows = kdms.filter(k => {
+    const matchSearch = !search || k.film.toLowerCase().includes(search) || (k.dist || '').toLowerCase().includes(search);
+    const matchFilter = currentFilter === 'all' || getStatus(k) === currentFilter;
+    return matchSearch && matchFilter;
+  });
+
+  // Sort by received date desc
+  rows.sort((a, b) => new Date(b.received) - new Date(a.received));
+
+  tbody.innerHTML = rows.map(renderRow).join('');
+  empty.style.display = rows.length === 0 ? 'block' : 'none';
+
+  document.getElementById('countNum').textContent = kdms.length;
+}
+
+function renderArchived() {
+  const search = (document.getElementById('searchArchived')?.value || '').toLowerCase();
+  const tbody = document.getElementById('archivedTableBody');
+  const empty = document.getElementById('emptyArchived');
+
+  let rows = archived.filter(k =>
+    !search || k.film.toLowerCase().includes(search) || (k.dist || '').toLowerCase().includes(search)
+  );
+  rows.sort((a, b) => new Date(b.end) - new Date(a.end));
+
+  tbody.innerHTML = rows.map(renderArchivedRow).join('');
+  empty.style.display = rows.length === 0 ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════
+// FILTER & SEARCH
+// ═══════════════════════════════════════════════
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function filterTable() { renderTable(); }
+function filterArchived() { renderArchived(); }
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'active') || (i === 1 && tab === 'archived'));
+  });
+  document.getElementById('tab-active').classList.toggle('active', tab === 'active');
+  document.getElementById('tab-archived').classList.toggle('active', tab === 'archived');
+  if (tab === 'archived') renderArchived();
+}
+
+// ═══════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modalTitle').textContent = id ? 'Editar KDM' : 'Añadir KDM';
+
+  if (id) {
+    const k = kdms.find(k => k.id === id);
+    document.getElementById('formFilm').value = k.film;
+    document.getElementById('formDist').value = k.dist || '';
+    document.getElementById('formCpls').value = (k.cpls || []).join('\n');
+    document.getElementById('formStart').value = k.start.slice(0, 16);
+    document.getElementById('formEnd').value = k.end.slice(0, 16);
+    document.getElementById('formMailId').value = k.mailId || '';
+  } else {
+    document.getElementById('formFilm').value = '';
+    document.getElementById('formDist').value = '';
+    document.getElementById('formCpls').value = '';
+    document.getElementById('formStart').value = '';
+    document.getElementById('formEnd').value = '';
+    document.getElementById('formMailId').value = '';
+  }
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function saveKdm() {
+  const film = document.getElementById('formFilm').value.trim();
+  const dist = document.getElementById('formDist').value.trim();
+  const cpls = document.getElementById('formCpls').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const start = document.getElementById('formStart').value;
+  const end = document.getElementById('formEnd').value;
+  const mailId = document.getElementById('formMailId').value.trim();
+
+  if (!film || !start || !end) {
+    alert('Rellena al menos el título, fecha de inicio y fecha de fin.');
+    return;
+  }
+
+  if (editingId) {
+    const idx = kdms.findIndex(k => k.id === editingId);
+    kdms[idx] = { ...kdms[idx], film, dist, cpls, start: new Date(start).toISOString(), end: new Date(end).toISOString(), mailId };
+  } else {
+    kdms.unshift({
+      id: Date.now().toString(), film, dist, cpls, manual: true,
+      start: new Date(start).toISOString(), end: new Date(end).toISOString(),
+      mailId, received: new Date().toISOString()
+    });
+  }
+
+  scheduleSave();
+  renderTable();
+  closeModal();
+}
+
+function editKdm(id) { openModal(id); }
+
+function deleteKdm(id) {
+  if (!confirm('¿Eliminar esta KDM?')) return;
+  kdms = kdms.filter(k => k.id !== id);
+  scheduleSave();
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════
+// PERSISTENCIA LOCAL
+// ═══════════════════════════════════════════════
+function saveLocal() {
+  try {
+    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(kdms));
+    localStorage.setItem(CONFIG.ARCHIVED_KEY, JSON.stringify(archived));
+  } catch(e) {}
+}
+
+function loadLocal() {
+  try {
+    const d = localStorage.getItem(CONFIG.STORAGE_KEY);
+    const a = localStorage.getItem(CONFIG.ARCHIVED_KEY);
+    if (d) kdms = JSON.parse(d);
+    if (a) archived = JSON.parse(a);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+// SYNC STATUS INDICATOR
+// ═══════════════════════════════════════════════
+// States: disconnected | pending | syncing | synced | error
+function setSyncStatus(state, label) {
+  const dot  = document.getElementById('syncDot');
+  const text = document.getElementById('syncText');
+  dot.className = 'sync-dot ' + state;
+  text.textContent = label;
+
+  if (state === 'synced' || state === 'error') {
+    clearPendingState();
+  }
+}
+
+function setPendingState() {
+  if (!webAppUrl) return;
+  hasPendingChanges = true;
+  document.getElementById('saveBtn').classList.add('pending-save');
+  setSyncStatus('pending', 'Cambios sin guardar');
+}
+
+function clearPendingState() {
+  hasPendingChanges = false;
+  document.getElementById('saveBtn').classList.remove('pending-save');
+}
+
+// ═══════════════════════════════════════════════
+// AUTOGUARDADO / SCHEDULESAVE
+// ═══════════════════════════════════════════════
+function scheduleSave() {
+  saveLocal(); // inmediato a localStorage
+  setPendingState();
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => syncToSheets(), CONFIG.AUTOSAVE_DELAY);
+}
+
+// ═══════════════════════════════════════════════
+// GUARDADO MANUAL
+// ═══════════════════════════════════════════════
+function saveNow() {
+  saveLocal();
+  clearTimeout(autoSaveTimer);
+  syncToSheets();
+}
+
+// ═══════════════════════════════════════════════
+// SYNC TO SHEETS
+// ═══════════════════════════════════════════════
+async function syncToSheets() {
+  if (!webAppUrl) {
+    // Sin Sheets: solo local, feedback visual rápido
+    setSyncStatus('synced', 'Guardado local');
+    showToast('✓', 'Guardado en local', 'ok');
+    return;
+  }
+
+  setSyncStatus('syncing', 'Guardando…');
+  try {
+    const payload = { kdms, archived };
+    await fetch(webAppUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    setSyncStatus('synced', 'Guardado ✓');
+    showToast('✓', 'Sincronizado con Google Sheets', 'ok');
+  } catch(e) {
+    setSyncStatus('error', 'Error de conexión');
+    showToast('✕', 'Error al sincronizar. Datos guardados en local.', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// LOAD FROM SHEETS
+// ═══════════════════════════════════════════════
+async function loadFromSheets() {
+  if (!webAppUrl) return;
+  if (hasPendingChanges) return; // no sobreescribir trabajo en curso
+
+  setSyncStatus('syncing', 'Cargando…');
+  try {
+    const res = await fetch(webAppUrl + '?type=kdm', { mode: 'cors' });
+    const data = await res.json();
+    if (data.kdms) { kdms = data.kdms; saveLocal(); }
+    if (data.archived) { archived = data.archived; saveLocal(); }
+    setSyncStatus('synced', 'Sincronizado');
+    renderTable();
+    renderArchived();
+  } catch(e) {
+    setSyncStatus('error', 'Sin conexión');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// AUTO-RELOAD (entre dispositivos)
+// ═══════════════════════════════════════════════
+function startAutoReload() {
+  clearInterval(autoReloadTimer);
+  autoReloadTimer = setInterval(() => loadFromSheets(), CONFIG.AUTORELOAD_INTERVAL);
+}
+
+// ═══════════════════════════════════════════════
+// GOOGLE SHEETS MODAL
+// ═══════════════════════════════════════════════
+function openSheetsModal() {
+  document.getElementById('sheetsUrlInput').value = webAppUrl;
+  const discBtn = document.getElementById('disconnectBtn');
+  if (discBtn) discBtn.style.display = webAppUrl ? 'inline-block' : 'none';
+  document.getElementById('sheetsStatus').style.display = 'none';
+  document.getElementById('sheetsModalOverlay').classList.add('open');
+}
+
+function closeSheetsModal() {
+  document.getElementById('sheetsModalOverlay').classList.remove('open');
+}
+
+function closeSheetsModalOutside(e) {
+  if (e.target === document.getElementById('sheetsModalOverlay')) closeSheetsModal();
+}
+
+async function connectSheets() {
+  const url = document.getElementById('sheetsUrlInput').value.trim();
+  if (!url) return;
+
+  const statusEl = document.getElementById('sheetsStatus');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'var(--status-yellow-bg)';
+  statusEl.style.color = 'var(--status-yellow)';
+  statusEl.textContent = 'Comprobando conexión…';
+
+  try {
+    const res = await fetch(url + '?type=kdm', { mode: 'cors' });
+    const data = await res.json();
+
+    webAppUrl = url;
+    localStorage.setItem(CONFIG.SHEETS_URL_KEY, url);
+
+    statusEl.style.background = 'var(--status-green-bg)';
+    statusEl.style.color = 'var(--status-green)';
+    statusEl.textContent = '✓ Conexión establecida correctamente';
+
+    const discBtn = document.getElementById('disconnectBtn');
+    if (discBtn) discBtn.style.display = 'inline-block';
+    setSyncStatus('synced', 'Sincronizado');
+    startAutoReload();
+
+    if (data.kdms && data.kdms.length > 0) {
+      kdms = data.kdms;
+      if (data.archived) archived = data.archived;
+      saveLocal();
+      renderTable();
+      renderArchived();
+    }
+
+    setTimeout(() => closeSheetsModal(), 1200);
+  } catch(e) {
+    statusEl.style.background = 'var(--status-red-bg)';
+    statusEl.style.color = 'var(--status-red)';
+    statusEl.textContent = '✕ No se pudo conectar. Verifica la URL.';
+  }
+}
+
+function disconnectSheets() {
+  if (!confirm('¿Desconectar Google Sheets? Los datos seguirán en local.')) return;
+  webAppUrl = '';
+  localStorage.removeItem(CONFIG.SHEETS_URL_KEY);
+  setSyncStatus('disconnected', 'Sin conectar');
+  clearInterval(autoReloadTimer);
+  closeSheetsModal();
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer = null;
+function showToast(icon, msg, type) {
+  const el = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  el.className = 'toast toast-' + type + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════
+// TEMA
+// ═══════════════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('kdm_theme', isDark ? 'light' : 'dark');
+}
+
+// ═══════════════════════════════════════════════
+// AYUDA
+// ═══════════════════════════════════════════════
+function openHelp()  { document.getElementById('helpOverlay').classList.add('open'); }
+function closeHelp() { document.getElementById('helpOverlay').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function init() {
+  initAuth();
+
+  // Tema
+  const savedTheme = localStorage.getItem('kdm_theme');
+  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // URL de Sheets
+  webAppUrl = localStorage.getItem(CONFIG.SHEETS_URL_KEY) || '';
+
+  // Cargar datos
+  loadLocal();
+  if (kdms.length === 0) kdms = loadDemoData();
+
+  // Estado inicial del sync
+  if (webAppUrl) {
+    setSyncStatus('syncing', 'Cargando…');
+    loadFromSheets().then(() => startAutoReload());
+  } else {
+    setSyncStatus('disconnected', 'Sin conectar');
+    clearPendingState();
+  }
+
+  renderTable();
+
+  // Ctrl+S / Cmd+S
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNow(); }
+  });
+
+  // Refresco visual de estados cada minuto
+  setInterval(() => renderTable(), 60000);
+}
+
+init();
+</script>
+<footer>v1.2 · Diseño por Pablo Goitia</footer>
+
+</body>
+</html>
