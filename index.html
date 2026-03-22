@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KDM Manager — Cines Babel · v1.7</title>
+<title>KDM Manager — Cines Babel · v1.8</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🔐</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1482,7 +1482,7 @@
 
       <div class="help-credits">
         <strong>KDM Manager — Cines Babel</strong><br>
-        Versión actual: <strong>v1.7</strong><br>
+        Versión actual: <strong>v1.8</strong><br>
         Diseño y desarrollo por <strong>Pablo Goitia</strong>
       </div>
 
@@ -1777,7 +1777,7 @@ function fmtTime(iso) {
 function renderRow(kdm) {
   const status = getStatus(kdm);
   const mailHref = kdm.mailId
-    ? `https://mail.google.com/mail/u/0/#inbox/${kdm.mailId}`
+    ? `https://mail.google.com/mail/u/kdmsbabel@gmail.com/#inbox/${kdm.mailId}`
     : '#';
   const mailTarget = kdm.mailId ? '_blank' : '';
 
@@ -1843,7 +1843,7 @@ function renderArchivedRow(kdm) {
   const cplsHtml = (kdm.cpls || []).map(c =>
     `<span class="cpl-tag" title="${c}">${c}</span>`
   ).join('');
-  const mailHref = kdm.mailId ? `https://mail.google.com/mail/u/0/#inbox/${kdm.mailId}` : '#';
+  const mailHref = kdm.mailId ? `https://mail.google.com/mail/u/kdmsbabel@gmail.com/#inbox/${kdm.mailId}` : '#';
 
   return `
     <tr>
@@ -1935,7 +1935,7 @@ function renderArchived() {
   manualBody.innerHTML = manualRows.map(k => {
     const status = getStatus(k);
     const cplsHtml = (k.cpls || []).map(c => `<span class="cpl-tag">${c}</span>`).join('');
-    const mailHref = k.mailId ? `https://mail.google.com/mail/u/0/#inbox/${k.mailId}` : '#';
+    const mailHref = k.mailId ? `https://mail.google.com/mail/u/kdmsbabel@gmail.com/#inbox/${k.mailId}` : '#';
     return `
       <tr>
         <td class="col-film">
@@ -2437,7 +2437,7 @@ function init() {
 
 init();
 </script>
-<footer>v1.7 · Diseño por Pablo Goitia</footer>
+<footer>v1.8 · Diseño por Pablo Goitia</footer>
 
 </body>
 </html>
