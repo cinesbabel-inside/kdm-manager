@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KDM Manager — Cines Babel · v1.8</title>
+<title>KDM Manager — Cines Babel · v1.17</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🔐</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -297,6 +297,57 @@
 
   .tab:hover { color: var(--text-primary); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Botón semana */
+  .btn-week {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 12px; font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer; font-family: inherit;
+    transition: all 0.15s; white-space: nowrap;
+    position: relative;
+  }
+  .btn-week:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .btn-week.has-pending {
+    border-color: var(--status-yellow);
+    color: var(--status-yellow);
+    background: var(--status-yellow-bg);
+  }
+  .week-badge {
+    display: none;
+    position: absolute; top: -5px; right: -5px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--status-yellow);
+    font-size: 9px; font-weight: 800; color: #000;
+    align-items: center; justify-content: center;
+  }
+  .btn-week.has-pending .week-badge { display: flex; }
+
+  /* Modal semana — scroll interno */
+  .week-modal-row {
+    display: flex; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .week-modal-row:last-child { border-bottom: none; }
+  .week-film-name { font-size: 13px; font-weight: 700; flex: 1; color: var(--text-primary); }
+  .week-film-dist { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .week-status-ok  { font-size: 11px; font-weight: 700; color: var(--status-green); white-space: nowrap; }
+  .week-status-nok { font-size: 11px; font-weight: 700; color: var(--status-yellow); white-space: nowrap; }
+  .week-status-unknown { font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+  .btn-week-remove {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    border: 1px solid var(--border-strong); background: transparent;
+    color: var(--text-muted); cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; transition: all 0.15s;
+  }
+  .btn-week-remove:hover { background: var(--status-red-bg); color: var(--status-red); border-color: var(--status-red); }
+  .week-empty { text-align: center; padding: 32px 0; color: var(--text-muted); font-size: 13px; }
 
   /* ═══════════════════════════════════════════
      MAIN CONTENT
@@ -1201,6 +1252,10 @@
 <div class="tabs-bar">
   <div class="tab active" onclick="switchTab('active')">KDMs Activas</div>
   <div class="tab" onclick="switchTab('archived')">Archivadas</div>
+  <button class="btn-week" id="weekBtn" onclick="openWeekModal()">
+    <span style="margin-right:4px;">📅</span> KDMs semana siguiente
+    <span class="week-badge" id="weekBadge">0</span>
+  </button>
 </div>
 
 <!-- ═══ MAIN ═══ -->
@@ -1482,7 +1537,7 @@
 
       <div class="help-credits">
         <strong>KDM Manager — Cines Babel</strong><br>
-        Versión actual: <strong>v1.8</strong><br>
+        Versión actual: <strong>v1.17</strong><br>
         Diseño y desarrollo por <strong>Pablo Goitia</strong>
       </div>
 
@@ -1492,24 +1547,81 @@
 
 <!-- ═══ MODAL: GOOGLE SHEETS CONFIG ═══ -->
 <div class="modal-overlay" id="sheetsModalOverlay">
-  <div class="modal" style="width:480px">
+  <div class="modal" style="width:520px">
     <h2>Conectar con Google Sheets</h2>
-    <p>Los datos se guardarán en una hoja de cálculo de Google y estarán disponibles en todos los ordenadores en tiempo real.</p>
-    <div class="modal-hint">
-      <strong>Pasos para configurar:</strong><br>
-      1. Ve a <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> y crea una hoja nueva.<br>
-      2. Ve a <strong>Extensiones → Apps Script</strong>, pega el script proporcionado y despliega como web app.<br>
-      3. Copia la URL del web app y pégala abajo.
+    <p>Configura las conexiones con las hojas de cálculo. Cada herramienta tiene su propia URL de Web App.</p>
+
+    <!-- Sección KDM Manager -->
+    <div style="background:var(--accent-soft);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:1rem;">🔐</span>
+        <span style="font-size:0.72rem;font-weight:800;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">KDM Manager</span>
+        <span id="kdmConnBadge" style="display:none;font-size:0.6rem;font-weight:700;background:var(--status-green-bg);color:var(--status-green);padding:1px 7px;border-radius:20px;">Conectado</span>
+      </div>
+      <div class="sheets-form-row" style="margin-bottom:0">
+        <label>URL del Web App (Apps Script)</label>
+        <input type="url" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
     </div>
-    <div class="sheets-form-row">
-      <label>URL del Web App (Apps Script)</label>
-      <input type="url" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+
+    <!-- Sección Ingestas -->
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-strong);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:1rem;">🎬</span>
+        <span style="font-size:0.72rem;font-weight:800;color:var(--text-secondary);letter-spacing:0.06em;text-transform:uppercase;">Lista de Ingestas</span>
+        <span id="ingestasConnBadge" style="display:none;font-size:0.6rem;font-weight:700;background:var(--status-green-bg);color:var(--status-green);padding:1px 7px;border-radius:20px;">Conectado</span>
+      </div>
+      <div class="sheets-form-row" style="margin-bottom:4px">
+        <label>URL del Web App (Apps Script)</label>
+        <input type="url" id="ingestasUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+      <p style="font-size:0.68rem;color:var(--text-muted);margin:0;line-height:1.5;">Necesario para consultar las películas con KDM de la semana siguiente.</p>
     </div>
+
     <div id="sheetsStatus" style="display:none;font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:14px;"></div>
     <div class="modal-actions">
-      <button class="btn-secondary" id="disconnectBtn" onclick="disconnectSheets()" style="display:none;color:#ef4444;border-color:#ef4444">Desconectar</button>
+      <button class="btn-secondary" id="disconnectBtn" onclick="disconnectSheets()" style="display:none;color:#ef4444;border-color:#ef4444">Desconectar todo</button>
       <button class="btn-secondary" onclick="closeSheetsModal()">Cancelar</button>
       <button class="btn-primary" onclick="connectSheets()">Guardar y conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: KDMs SEMANA SIGUIENTE ═══ -->
+<div class="modal-overlay" id="weekModalOverlay" onclick="closeWeekModalOutside(event)">
+  <div class="modal" style="width:540px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <h2 style="margin:0;">KDMs semana siguiente</h2>
+      <button class="btn-secondary" onclick="closeWeekModal()" style="padding:5px 12px;font-size:0.72rem;">✕</button>
+    </div>
+    <p id="weekRangeLabel" style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:16px;"></p>
+
+    <div id="weekModalContent" class="modal-scroll" style="max-height:55vh;">
+      <div class="week-empty">Cargando películas…</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <button class="btn-primary" style="font-size:0.78rem;padding:9px 20px;" onclick="openAddWeekFilm()">+ Añadir película</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="weekSummary" style="font-size:0.72rem;color:var(--text-muted);"></span>
+        <button class="btn-secondary" onclick="closeWeekModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: AÑADIR PELÍCULA A SEMANA ═══ -->
+<div class="modal-overlay" id="addWeekFilmOverlay" onclick="if(event.target===this)closeAddWeekFilm()" style="z-index:300">
+  <div class="modal" style="width:400px">
+    <h2>Añadir película a la semana</h2>
+    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:20px;">Añade manualmente una película que necesite KDM esta semana.</p>
+    <div class="sheets-form-row">
+      <label>Título de la película</label>
+      <input type="text" id="addWeekFilmInput" placeholder="Ej: Amarga Navidad" onkeydown="if(event.key==='Enter')confirmAddWeekFilm()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeAddWeekFilm()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmAddWeekFilm()">Añadir</button>
     </div>
   </div>
 </div>
@@ -1640,6 +1752,7 @@ let manualArchived = []; // KDMs activas archivadas manualmente
 let currentFilter = 'all';
 let editingId = null;
 let webAppUrl = '';
+let ingestasUrl = '';  // URL de la Sheet de ingestas
 let hasPendingChanges = false;
 let autoSaveTimer = null;
 let autoReloadTimer = null;
@@ -2204,8 +2317,11 @@ function startAutoReload() {
 // ═══════════════════════════════════════════════
 function openSheetsModal() {
   document.getElementById('sheetsUrlInput').value = webAppUrl;
+  document.getElementById('ingestasUrlInput').value = ingestasUrl;
   const discBtn = document.getElementById('disconnectBtn');
-  if (discBtn) discBtn.style.display = webAppUrl ? 'inline-block' : 'none';
+  if (discBtn) discBtn.style.display = (webAppUrl || ingestasUrl) ? 'inline-block' : 'none';
+  document.getElementById('kdmConnBadge').style.display = webAppUrl ? 'inline-block' : 'none';
+  document.getElementById('ingestasConnBadge').style.display = ingestasUrl ? 'inline-block' : 'none';
   document.getElementById('sheetsStatus').style.display = 'none';
   document.getElementById('sheetsModalOverlay').classList.add('open');
 }
@@ -2219,8 +2335,9 @@ function closeSheetsModalOutside(e) {
 }
 
 async function connectSheets() {
-  const url = document.getElementById('sheetsUrlInput').value.trim();
-  if (!url) return;
+  const url         = document.getElementById('sheetsUrlInput').value.trim();
+  const urlIngestas = document.getElementById('ingestasUrlInput').value.trim();
+  if (!url && !urlIngestas) return;
 
   const statusEl = document.getElementById('sheetsStatus');
   statusEl.style.display = 'block';
@@ -2228,42 +2345,81 @@ async function connectSheets() {
   statusEl.style.color = 'var(--status-yellow)';
   statusEl.textContent = 'Comprobando conexión…';
 
-  try {
-    const res = await fetch(url + '?type=kdm', { mode: 'cors' });
-    const data = await res.json();
+  let kdmOk = !url;       // si no hay URL se considera OK (no configurado)
+  let ingestasOk = !urlIngestas;
 
+  // Verificar KDM Manager URL
+  if (url) {
+    try {
+      const res = await fetch(url + '?type=kdm', { mode: 'cors' });
+      await res.json();
+      kdmOk = true;
+    } catch(e) { kdmOk = false; }
+  }
+
+  // Verificar Ingestas URL
+  if (urlIngestas) {
+    try {
+      const res = await fetch(urlIngestas + '?action=load', { mode: 'cors' });
+      await res.json();
+      ingestasOk = true;
+    } catch(e) { ingestasOk = false; }
+  }
+
+  if (!kdmOk || !ingestasOk) {
+    statusEl.style.background = 'var(--status-red-bg)';
+    statusEl.style.color = 'var(--status-red)';
+    const errores = [];
+    if (!kdmOk) errores.push('KDM Manager');
+    if (!ingestasOk) errores.push('Ingestas');
+    statusEl.textContent = '✕ No se pudo conectar: ' + errores.join(', ') + '. Verifica las URLs.';
+    return;
+  }
+
+  // Guardar ambas URLs
+  if (url) {
     webAppUrl = url;
     localStorage.setItem(CONFIG.SHEETS_URL_KEY, url);
+  }
+  if (urlIngestas) {
+    ingestasUrl = urlIngestas;
+    localStorage.setItem('kdm_ingestas_url', urlIngestas);
+  }
 
-    statusEl.style.background = 'var(--status-green-bg)';
-    statusEl.style.color = 'var(--status-green)';
-    statusEl.textContent = '✓ Conexión establecida correctamente';
+  statusEl.style.background = 'var(--status-green-bg)';
+  statusEl.style.color = 'var(--status-green)';
+  statusEl.textContent = '✓ Conexión establecida correctamente';
 
-    const discBtn = document.getElementById('disconnectBtn');
-    if (discBtn) discBtn.style.display = 'inline-block';
-    setSyncStatus('synced', 'Sincronizado');
-    startAutoReload();
+  document.getElementById('kdmConnBadge').style.display = url ? 'inline-block' : 'none';
+  document.getElementById('ingestasConnBadge').style.display = urlIngestas ? 'inline-block' : 'none';
+  const discBtn = document.getElementById('disconnectBtn');
+  if (discBtn) discBtn.style.display = 'inline-block';
 
+  setSyncStatus('synced', 'Sincronizado');
+  startAutoReload();
+
+  if (url) {
+    const res = await fetch(url + '?type=kdm', { mode: 'cors' });
+    const data = await res.json();
     if (data.kdms && data.kdms.length > 0) {
       kdms = data.kdms;
       if (data.archived) archived = data.archived;
+      if (data.manualArchived) manualArchived = data.manualArchived;
       saveLocal();
       renderTable();
       renderArchived();
     }
-
-    setTimeout(() => closeSheetsModal(), 1200);
-  } catch(e) {
-    statusEl.style.background = 'var(--status-red-bg)';
-    statusEl.style.color = 'var(--status-red)';
-    statusEl.textContent = '✕ No se pudo conectar. Verifica la URL.';
   }
+
+  setTimeout(() => closeSheetsModal(), 1200);
 }
 
 function disconnectSheets() {
   if (!confirm('¿Desconectar Google Sheets? Los datos seguirán en local.')) return;
   webAppUrl = '';
+  ingestasUrl = '';
   localStorage.removeItem(CONFIG.SHEETS_URL_KEY);
+  localStorage.removeItem('kdm_ingestas_url');
   setSyncStatus('disconnected', 'Sin conectar');
   clearInterval(autoReloadTimer);
   closeSheetsModal();
@@ -2382,6 +2538,201 @@ function restoreKdm(id) {
 }
 
 // ═══════════════════════════════════════════════
+// MODAL SEMANA SIGUIENTE
+// ═══════════════════════════════════════════════
+// weekManual: películas añadidas manualmente para esta semana
+// weekExcluded: películas de ingestas excluidas para esta semana
+let weekManual   = JSON.parse(localStorage.getItem('kdm_week_manual')   || '[]');
+let weekExcluded = JSON.parse(localStorage.getItem('kdm_week_excluded') || '[]');
+
+function getWeekRange() {
+  // Calcula el próximo viernes → jueves
+  const now = new Date();
+  const day = now.getDay(); // 0=dom, 1=lun, ... 5=vie, 6=sab
+  const daysToFri = day === 5 ? 0 : (5 - day + 7) % 7 || 7;
+  const fri = new Date(now);
+  fri.setDate(now.getDate() + daysToFri);
+  fri.setHours(0, 0, 0, 0);
+  const thu = new Date(fri);
+  thu.setDate(fri.getDate() + 6);
+  thu.setHours(23, 59, 59, 999);
+  return { fri, thu };
+}
+
+function fmtWeekDate(d) {
+  return d.toLocaleDateString('es-ES', { weekday:'short', day:'2-digit', month:'short' });
+}
+
+async function openWeekModal() {
+  document.getElementById('weekModalOverlay').classList.add('open');
+  const { fri, thu } = getWeekRange();
+  document.getElementById('weekRangeLabel').textContent =
+    `Semana del ${fmtWeekDate(fri)} al ${fmtWeekDate(thu)}`;
+  await renderWeekModal();
+}
+
+function closeWeekModal() {
+  document.getElementById('weekModalOverlay').classList.remove('open');
+}
+
+function closeWeekModalOutside(e) {
+  if (e.target === document.getElementById('weekModalOverlay')) closeWeekModal();
+}
+
+async function renderWeekModal() {
+  const content = document.getElementById('weekModalContent');
+  content.innerHTML = '<div class="week-empty">Cargando…</div>';
+
+  const { fri, thu } = getWeekRange();
+
+  // Cargar películas de ingestas (enc=KDM)
+  // No intentar fetch si estamos en file:// — Chrome lo bloquea
+  let ingestaFilms = [];
+  let ingestasError = false;
+  const isLocal = window.location.protocol === 'file:';
+
+  if (ingestasUrl && !isLocal) {
+    try {
+      const res  = await fetch(ingestasUrl + '?action=load', { mode: 'cors' });
+      const data = await res.json();
+      const rows = data.rows || data || [];
+      ingestaFilms = rows
+        .filter(r => !r.isEmpty && r.enc === 2 && r.pelicula)
+        .map(r => ({ film: r.pelicula.trim(), source: 'ingestas' }));
+    } catch(e) {
+      ingestasError = true;
+    }
+  } else if (ingestasUrl && isLocal) {
+    ingestasError = true; // marcamos error silencioso para mostrar aviso
+  }
+
+  // Añadir películas manuales y quitar excluidas
+  const manual = weekManual.map(f => ({ film: f, source: 'manual' }));
+  let allFilms = [...ingestaFilms, ...manual]
+    .filter((f, i, arr) => arr.findIndex(x => x.film.toLowerCase() === f.film.toLowerCase()) === i)
+    .filter(f => !weekExcluded.map(e => e.toLowerCase()).includes(f.film.toLowerCase()));
+
+  // Aviso no bloqueante si ingestas falló
+  const errorBanner = ingestasError
+    ? `<div style="font-size:0.72rem;color:var(--status-yellow);background:var(--status-yellow-bg);border-radius:8px;padding:8px 12px;margin-bottom:12px;">⚠ No se pudo conectar con Ingestas. Mostrando solo películas añadidas manualmente.</div>`
+    : '';
+
+  if (allFilms.length === 0 && !ingestasUrl && weekManual.length === 0) {
+    content.innerHTML = `<div class="week-empty">Conecta la hoja de Ingestas en <strong>⚙ Google Sheets</strong><br>para ver las películas que necesitan KDM.</div>`;
+    updateWeekBtn(0, 0);
+    return;
+  }
+
+  if (allFilms.length === 0) {
+    content.innerHTML = errorBanner + '<div class="week-empty">No hay películas con KDM para esta semana.</div>';
+    document.getElementById('weekSummary').textContent = '';
+    updateWeekBtn(0, 0);
+    return;
+  }
+  let pendingCount = 0;
+  const rows = allFilms.map(({ film, source }) => {
+    const filmNorm = film.toLowerCase();
+    const kdmMatch = kdms.find(k => {
+      if (k.film.toLowerCase() !== filmNorm) return false;
+      const s = getStatus(k);
+      // Tiene KDM activa, que caduca pronto, o por activarse
+      return s === 'active' || s === 'expiring' || s === 'pending';
+    });
+
+    // También buscar si hay KDM que cubra la semana
+    const kdmCoversWeek = kdms.find(k => {
+      if (k.film.toLowerCase() !== filmNorm) return false;
+      const start = new Date(k.start);
+      const end   = new Date(k.end);
+      return start <= thu && end >= fri;
+    });
+
+    const covered = kdmMatch || kdmCoversWeek;
+    if (!covered) pendingCount++;
+
+    const statusHtml = covered
+      ? `<span class="week-status-ok">✓ KDM recibida</span>`
+      : `<span class="week-status-nok">⚠ Pendiente</span>`;
+
+    const sourceTag = source === 'manual'
+      ? `<span style="font-size:9px;font-weight:700;background:var(--status-yellow-bg);color:var(--status-yellow);padding:1px 5px;border-radius:3px;margin-left:6px;">MANUAL</span>`
+      : '';
+
+    return `
+      <div class="week-modal-row">
+        <div style="flex:1">
+          <div class="week-film-name">${film}${sourceTag}</div>
+        </div>
+        ${statusHtml}
+        <button class="btn-week-remove" data-film="${film.replace(/"/g,'&quot;')}" data-source="${source}" onclick="excludeWeekFilm(this.dataset.film, this.dataset.source)" title="Quitar de esta semana">✕</button>
+      </div>`;
+  }).join('');
+
+  content.innerHTML = errorBanner + rows;
+
+  const total = allFilms.length;
+
+  if (total === 0) {
+    content.innerHTML = '<div class="week-empty">No hay películas con KDM para esta semana.</div>';
+    document.getElementById('weekSummary').textContent = '';
+    updateWeekBtn(0, 0);
+    return;
+  }
+
+  document.getElementById('weekSummary').textContent =
+    pendingCount === 0
+      ? `✓ Todas las KDMs recibidas (${total})`
+      : `${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''} de ${total}`;
+
+  updateWeekBtn(pendingCount, total);
+}
+
+function updateWeekBtn(pending, total) {
+  const btn   = document.getElementById('weekBtn');
+  const badge = document.getElementById('weekBadge');
+  btn.classList.toggle('has-pending', pending > 0);
+  badge.textContent = pending;
+}
+
+function excludeWeekFilm(film, source) {
+  const filmLower = film.toLowerCase();
+
+  if (source === 'manual') {
+    // Película manual — simplemente quitarla de la lista
+    weekManual = weekManual.filter(f => f.toLowerCase() !== filmLower);
+    localStorage.setItem('kdm_week_manual', JSON.stringify(weekManual));
+  } else {
+    // Película de ingestas — añadir a excluidas
+    if (!weekExcluded.map(e => e.toLowerCase()).includes(filmLower)) {
+      weekExcluded.push(film);
+      localStorage.setItem('kdm_week_excluded', JSON.stringify(weekExcluded));
+    }
+  }
+  renderWeekModal();
+}
+
+function openAddWeekFilm() {
+  document.getElementById('addWeekFilmInput').value = '';
+  document.getElementById('addWeekFilmOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('addWeekFilmInput').focus(), 100);
+}
+
+function closeAddWeekFilm() {
+  document.getElementById('addWeekFilmOverlay').classList.remove('open');
+}
+
+function confirmAddWeekFilm() {
+  const val = document.getElementById('addWeekFilmInput').value.trim();
+  if (!val) return;
+  if (!weekManual.map(f => f.toLowerCase()).includes(val.toLowerCase())) {
+    weekManual.push(val);
+    localStorage.setItem('kdm_week_manual', JSON.stringify(weekManual));
+  }
+  closeAddWeekFilm();
+  renderWeekModal();
+}
+
+// ═══════════════════════════════════════════════
 // TEMA
 // ═══════════════════════════════════════════════
 function toggleTheme() {
@@ -2408,7 +2759,8 @@ function init() {
   if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
 
   // URL de Sheets
-  webAppUrl = localStorage.getItem(CONFIG.SHEETS_URL_KEY) || '';
+  webAppUrl   = localStorage.getItem(CONFIG.SHEETS_URL_KEY) || '';
+  ingestasUrl = localStorage.getItem('kdm_ingestas_url') || '';
 
   // Cargar datos
   loadLocal();
@@ -2437,7 +2789,7 @@ function init() {
 
 init();
 </script>
-<footer>v1.8 · Diseño por Pablo Goitia</footer>
+<footer>v1.17 · Diseño por Pablo Goitia</footer>
 
 </body>
 </html>
