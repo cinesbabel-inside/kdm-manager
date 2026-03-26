@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KDM Manager — Cines Babel · v1.17</title>
+<title>KDM Manager — Cines Babel · v1.18</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🔐</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1049,7 +1049,7 @@
       onkeydown="if(event.key==='Enter')checkPassword()"/>
     <button class="lock-btn" onclick="checkPassword()">Entrar</button>
     <div class="lock-error" id="lockError"></div>
-    <div style="margin-top:20px;font-size:0.6rem;color:rgba(255,255,255,0.12);letter-spacing:0.08em;">v1.17</div>
+    <div style="margin-top:20px;font-size:0.6rem;color:rgba(255,255,255,0.12);letter-spacing:0.08em;">v1.18</div>
   </div>
 </div>
 
@@ -1367,7 +1367,7 @@
 
       <div class="help-credits">
         <strong>KDM Manager — Cines Babel</strong><br>
-        Versión actual: <strong>v1.17</strong><br>
+        Versión actual: <strong>v1.18</strong><br>
         Diseño y desarrollo por <strong>Pablo Goitia</strong>
       </div>
 
@@ -2054,8 +2054,8 @@ function setSyncStatus(state, label) {
 }
 
 function setPendingState() {
-  if (!webAppUrl) return;
   hasPendingChanges = true;
+  if (!webAppUrl) return; // sin Sheets no hay indicador visual, pero sí bloqueamos el autoreload
   document.getElementById('saveBtn').classList.add('pending-save');
   setSyncStatus('pending', 'Cambios sin guardar');
 }
@@ -2619,7 +2619,7 @@ function init() {
 
 init();
 </script>
-<footer>v1.17 · Diseño por Pablo Goitia</footer>
+<footer>v1.18 · Diseño por Pablo Goitia</footer>
 
 </body>
 </html>
