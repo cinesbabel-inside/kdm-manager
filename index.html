@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KDM Manager — Cines Babel · v1.18</title>
+<title>KDM Manager — Cines Babel · v1.19</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='32' font-size='32'>🔐</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -326,8 +326,9 @@
   .week-modal-row:last-child { border-bottom: none; }
   .week-film-name { font-size: 13px; font-weight: 700; flex: 1; color: var(--text-primary); }
   .week-film-dist { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .week-status-ok  { font-size: 11px; font-weight: 700; color: var(--status-green); white-space: nowrap; }
-  .week-status-nok { font-size: 11px; font-weight: 700; color: var(--status-yellow); white-space: nowrap; }
+  .week-status-ok     { font-size: 11px; font-weight: 700; color: var(--status-green); white-space: nowrap; }
+  .week-status-renew  { font-size: 11px; font-weight: 700; color: var(--status-blue); white-space: nowrap; }
+  .week-status-nok    { font-size: 11px; font-weight: 700; color: var(--status-yellow); white-space: nowrap; }
   .week-status-unknown { font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
   .btn-week-remove {
     width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
@@ -1049,7 +1050,7 @@
       onkeydown="if(event.key==='Enter')checkPassword()"/>
     <button class="lock-btn" onclick="checkPassword()">Entrar</button>
     <div class="lock-error" id="lockError"></div>
-    <div style="margin-top:20px;font-size:0.6rem;color:rgba(255,255,255,0.12);letter-spacing:0.08em;">v1.18</div>
+    <div style="margin-top:20px;font-size:0.6rem;color:rgba(255,255,255,0.12);letter-spacing:0.08em;">v1.19</div>
   </div>
 </div>
 
@@ -1367,7 +1368,7 @@
 
       <div class="help-credits">
         <strong>KDM Manager — Cines Babel</strong><br>
-        Versión actual: <strong>v1.18</strong><br>
+        Versión actual: <strong>v1.19</strong><br>
         Diseño y desarrollo por <strong>Pablo Goitia</strong>
       </div>
 
@@ -2462,14 +2463,8 @@ async function renderWeekModal() {
   let pendingCount = 0;
   const rows = allFilms.map(({ film, source }) => {
     const filmNorm = film.toLowerCase();
-    const kdmMatch = kdms.find(k => {
-      if (k.film.toLowerCase() !== filmNorm) return false;
-      const s = getStatus(k);
-      // Tiene KDM activa, que caduca pronto, o por activarse
-      return s === 'active' || s === 'expiring' || s === 'pending';
-    });
 
-    // También buscar si hay KDM que cubra la semana
+    // Buscar KDM que cubra alguna parte de la semana
     const kdmCoversWeek = kdms.find(k => {
       if (k.film.toLowerCase() !== filmNorm) return false;
       const start = new Date(k.start);
@@ -2477,12 +2472,30 @@ async function renderWeekModal() {
       return start <= thu && end >= fri;
     });
 
-    const covered = kdmMatch || kdmCoversWeek;
-    if (!covered) pendingCount++;
+    // Determinar si cubre la semana COMPLETA (inicio ≤ viernes y fin ≥ jueves)
+    const coversFullWeek = kdmCoversWeek &&
+      new Date(kdmCoversWeek.end) >= thu;
 
-    const statusHtml = covered
+    // Estado:
+    // 'ok'     → KDM cubre toda la semana
+    // 'renew'  → KDM existe pero caduca antes del jueves (necesita renovación)
+    // 'nok'    → no hay KDM para esta semana
+    let weekState;
+    if (!kdmCoversWeek) {
+      weekState = 'nok';
+      pendingCount++;
+    } else if (!coversFullWeek) {
+      weekState = 'renew';
+      pendingCount++;
+    } else {
+      weekState = 'ok';
+    }
+
+    const statusHtml = weekState === 'ok'
       ? `<span class="week-status-ok">✓ KDM recibida</span>`
-      : `<span class="week-status-nok">⚠ Pendiente</span>`;
+      : weekState === 'renew'
+        ? `<span class="week-status-renew">🔄 Renovar</span>`
+        : `<span class="week-status-nok">⚠ Pendiente</span>`;
 
     const sourceTag = source === 'manual'
       ? `<span style="font-size:9px;font-weight:700;background:var(--status-yellow-bg);color:var(--status-yellow);padding:1px 5px;border-radius:3px;margin-left:6px;">MANUAL</span>`
@@ -2619,7 +2632,7 @@ function init() {
 
 init();
 </script>
-<footer>v1.18 · Diseño por Pablo Goitia</footer>
+<footer>v1.19 · Diseño por Pablo Goitia</footer>
 
 </body>
 </html>
